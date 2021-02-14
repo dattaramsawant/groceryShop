@@ -1,0 +1,4 @@
+{
+    "mongoURI":"mongodb+srv://datta:datta@2010@cluster0.ticzi.mongodb.net/<dbname>?retryWrites=true&w=majority",
+    "jwtSecret":"gsjwt"
+}
