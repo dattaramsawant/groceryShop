@@ -39,7 +39,7 @@ export default function ProductTable(props) {
                         <td>{data.quantity}</td>
                         <td>{data.available.toString()}</td>
                         <td>
-                            <div className="d-flex align-item-center">
+                            <div className="d-flex align-item-center w-100">
                                 <img src='/icons/pencil.svg' className="editIcon cursor" onClick={()=>props.editClick(data)}/>
                                 <img src='/icons/delete.svg'className="deleteIcon cursor" onClick={()=>props.deleteProduct(data)} />
                             </div>
