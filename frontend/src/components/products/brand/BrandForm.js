@@ -11,6 +11,9 @@ export default function BrandForm(props) {
     const [dropdown,setDropdown]=useState(false)
     const [brandCategoryData,setBrandCategoryData]=useState([])
     const [brandCategoryAllData,setBrandCategoryAllData]=useState([])
+    const [imgURL,setImgURL]=useState()
+    const [imgDB,setImgDB]=useState({})
+    const [imgURLDB,setImgURLDB]=useState()
 
     const ref=useRef()
     // console.log(Object.keys(categoryInputClick).length === 0)
@@ -55,6 +58,28 @@ export default function BrandForm(props) {
             values.brandCategory=[...values.brandCategory,data._id]
         }
     }
+
+    const imgToFile=()=>{
+        const logo =props.editData.brandLogo
+        let img=new Image()
+        img.crossOrigin="Anonymous"
+        fetch(logo)
+        .then(res=>res.blob())
+        .then(blob=>{
+            const metadata={
+                type:blob.type
+            }
+            const imgToFile2=new File([blob],logo,metadata)
+            setImgDB(imgToFile2)
+        })
+    }
+
+    useEffect(()=>{
+        if(props.editFlag){
+            imgToFile()
+            setImgURLDB(props.editData.brandLogo)
+        }
+    },[])
     useEffect(() => {
         if(props.editFlag){
             const brandId=[]
@@ -68,12 +93,53 @@ export default function BrandForm(props) {
         }
     }, [props.editFlag])
 
+    const onFileChange = (e,data) => {
+        if(e.target.files.length > 0){
+            const filesSelected = Array.from(e.target.files);
+            Promise.all(filesSelected.map(file => {
+                return (new Promise((resolve,reject) => {
+                    const reader = new FileReader();
+                    reader.addEventListener('load', (ev) => {
+                        resolve(ev.target.result);
+                    });
+                    reader.addEventListener('error', reject);
+                    reader.readAsDataURL(file);
+                }));
+            }))
+            .then(images => {
+                setImgURL(images)
+            }, error => {        
+                console.error(error);
+            });
+            if(props.editFlag){
+                // const imgArray=[...imgDB]
+                // filesSelected.forEach(data=>imgArray.push(data))
+                setImgDB(filesSelected[0])
+            }else{
+                data.brandLogo=filesSelected[0]
+            }
+        }
+    }
+
+    const removeImg=(value)=>{
+        setImgURL()
+        setImgURLDB()
+        setImgDB({})
+        value.brandLogo=""
+    }
+    const removeImgDB=(value)=>{
+        setImgURL()
+        setImgURLDB()
+        setImgDB({})
+        value.brandLogo=""
+    }
     return (
         <>
             <Formik
                 initialValues={{
                     brandName:props.editFlag ? props.editData.brandName : '',
-                    brandCategory:props.editFlag ? props.editData.brandCategory : []
+                    brandCategory:props.editFlag ? props.editData.brandCategory : [],
+                    brandLogo:''
                 }}
 
                 validationSchema={validationSchema}
@@ -84,9 +150,20 @@ export default function BrandForm(props) {
                         const url=BASEURL+BRAND+'/'+props.editData._id
                         const data={
                             // brandName:values.brandName,
-                            brandCategory:values.brandCategory
+                            brandCategory:values.brandCategory,
+                            brandLogo:values.brandLogo
                         }
-                        const req=await new APIServices().patch(url,data)
+                        const formData= new FormData()
+                        Object.keys(data).map((d,i)=>(
+                            // formData.append(d,data[d])
+                            d === 'brandCategory' ? 
+                            data[d].map(cat =>(
+                                formData.append(d,cat)
+                            ))
+                            :
+                            formData.append(d,data[d])
+                        ))
+                        const req=await new APIServices().patch(url,formData,'form-data')
                         if(req.error){
                             props.setToaster(true)
                             props.setToasterMsg(req.results.message)
@@ -104,9 +181,20 @@ export default function BrandForm(props) {
                         const url=BASEURL+BRAND
                         const data={
                             brandName:values.brandName,
-                            brandCategory:values.brandCategory
+                            brandCategory:values.brandCategory,
+                            brandLogo:values.brandLogo
                         }
-                        const req=await new APIServices().post(url,data)
+                        const formData= new FormData()
+                        Object.keys(data).map((d,i)=>(
+                            // formData.append(d,data[d])
+                            d === 'brandCategory' ? 
+                            data[d].map(cat =>(
+                                formData.append(d,cat)
+                            ))
+                            :
+                            formData.append(d,data[d])
+                        ))
+                        const req=await new APIServices().post(url,formData,'form-data')
                         if(req.error){
                             props.setToaster(true)
                             props.setToasterMsg(req.results.message)
@@ -180,6 +268,37 @@ export default function BrandForm(props) {
                                 }
                                <ErrorValidation touched={touched.brandCategory} message={errors.brandCategory}/>
                             </span>
+                        </div>
+
+                        <div>
+                            <input
+                                accept=".jpg,png,.jpeg,.svg"
+                                // className={classes.input}
+                                id="contained-button-file"
+                                type="file"
+                                name='brandLogo'
+                                onChange={(e)=>onFileChange(e,values)}
+                                value=""
+                                style={{display:'none'}}
+                            />
+                            <label htmlFor="contained-button-file" className="addDataPrimaryButton">
+                                Choose images
+                            </label>
+                        </div>
+                        <div className="d-flex flex-wrap">
+                            {imgURL &&
+                                <div className='imgPreviewMain'>
+                                    <img src={imgURL} className="uploadImgPreview mr-2 mb-2 mt-2" />
+                                    <img src='/icons/close.svg' className="imgRemoveIcon cursor" onClick={()=>removeImg(values)} />
+                                </div>
+                            }
+
+                            {(props.editFlag && imgURLDB) &&
+                                <div className='imgPreviewMain'>
+                                    <img src={imgURLDB} className="uploadImgPreview mr-2 mb-2 mt-2" />
+                                    <img src='/icons/close.svg' className="imgRemoveIcon cursor" onClick={()=>removeImgDB(values)} />
+                                </div>
+                            }
                         </div>
 
                         <button

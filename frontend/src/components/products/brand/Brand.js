@@ -48,7 +48,7 @@ export default function Brand() {
     }
 
     const fetchData=async()=>{
-        const url=BASEURL+BRAND+`?page=${page}&limit=${limit}&name=${search}`
+        const url=BASEURL+BRAND+`?page=${page}&limit=${limit}&brandName=${search}`
         const res=await new APIServices().get(url)
         setData(res.results.brand)
         setTotalCount(res.results.totalCount)
@@ -87,7 +87,7 @@ export default function Brand() {
     useEffect(()=>{
         let searchTimer=setTimeout(async()=>{
             if(search){
-                const url=BASEURL+BRAND+`?name=${search}&page=${page}&limit=${limit}`
+                const url=BASEURL+BRAND+`?brandName=${search}&page=${page}&limit=${limit}`
                 const res=await new APIServices().get(url)
                 setData(res.results.brand)
                 setTotalCount(res.results.totalCount)

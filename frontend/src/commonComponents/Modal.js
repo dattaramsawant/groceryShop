@@ -7,7 +7,7 @@ export default function Modal(props) {
 
     useClickOutSide(ref,()=>{
         if(ref.current){
-            props.outSideClick()
+            // props.outSideClick()
             console.log('click outside')
         }
     });

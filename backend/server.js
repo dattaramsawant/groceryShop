@@ -2,8 +2,12 @@ const express=require('express');
 const mongoose=require('mongoose');
 const config=require('config');
 const cors = require('cors');
+const swaggerUi = require("swagger-ui-express");
+const swagger=require('./swagger');
 
 const app=express();
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swagger.swaggerSpec)); //Swagger _setup
 
 // Express Middleware
 app.use(express.urlencoded({extended:true}));
