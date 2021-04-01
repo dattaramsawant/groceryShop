@@ -7,7 +7,7 @@ const auth=require('../middleware/auth');
 const nodemailer=require('nodemailer');
 
 const User=require('../models/User');
-const e = require('express');
+const OTP=require('../models/OTP');
 
 router.post('/',(req,res)=>{
     const {email,password}=req.body;
@@ -78,12 +78,6 @@ router.patch('/changePassword/:id',auth,(req,res)=>{
         })
 })
 
-var otpNumber = null
-    otpNumber = Math.floor(100000 + Math.random() * 900000);   
-    otpNumber = String(otpNumber);
-    otpNumber = otpNumber.substring(0,4);
-    otpNumber = parseInt(otpNumber)
-
 let transporter = nodemailer.createTransport({
     // host: "",
     // port: 587,
@@ -92,12 +86,18 @@ let transporter = nodemailer.createTransport({
     
     auth: {
         user: 'durvassawant79@gmail.com',
-        pass: 'Datta@2010',
+        pass: 'Datta@201097',
     }
     
 });
 
 router.post('/otpSend',async(req,res)=>{
+    var otpNumber = null
+    otpNumber = Math.floor(100000 + Math.random() * 900000);   
+    otpNumber = String(otpNumber);
+    otpNumber = otpNumber.substring(0,4);
+    otpNumber = parseInt(otpNumber)
+
     const {email}=req.body;
 
     if(!email){
@@ -106,31 +106,46 @@ router.post('/otpSend',async(req,res)=>{
 
     const emailVerify=await User.findOne({email})
 
-    if(otpNumber===null){
-        otpNumber = Math.floor(100000 + Math.random() * 900000);   
-        otpNumber = String(otpNumber);
-        otpNumber = otpNumber.substring(0,4);
-        otpNumber = parseInt(otpNumber)
-    }
-
     if(emailVerify !== null && emailVerify.email===req.body.email){
-        var mailOptions=await {
-            to: req.body.email,
-            subject: "Otp for registration is: ",
-            html: "<h3>OTP for account verification is </h3>"  + "<h1 style='font-weight:bold;'>" + otpNumber +"</h1>" // html body
-        }
+        // var mailOptions=await {
+        //     to: req.body.email,
+        //     subject: "Otp for registration is: ",
+        //     html: "<h3>OTP for account verification is </h3>"  + "<h1 style='font-weight:bold;'>" + otpNumber +"</h1>" // html body
+        // }
 
-        await transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                return console.log(error);
-            }
-            console.log('Message sent: %s', info.messageId);   
-            console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+        // await transporter.sendMail(mailOptions, (error, info) => {
+        //     if (error) {
+        //         return ()=>res.status(422).json({error:error})
+        //     }
+        //     console.log('Message sent: %s', info.messageId);   
+        //     console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
         
-            res.render('otpNumber');
+        //     res.render('otpNumber');
+        // })
+        
+        const otp=new OTP({
+            email,otp:otpNumber
         })
 
-        return res.status(201).json('Success')
+        OTP.findOne({email})
+            .then(data=>{
+                if(data){
+                    OTP.findByIdAndUpdate({_id:data._id})
+                        .then((otpData)=>{
+                            console.log(otpData)
+                            otpData.otp=otpNumber
+
+                            otpData.save()
+                                .then(()=>res.status(201).json({message:"Success"}))
+                                .catch((error)=>res.status(422).json({error:error}))
+                        })
+                }else{
+                    otp.save()
+                        .then(()=>res.status(201).json({message:"Success"}))
+                        .catch((error)=>res.status(422).json({error:error}))
+                }
+            })
+        
     }else{
         return res.status(400).json('Error')
     }
@@ -143,33 +158,35 @@ router.post('/otpVerify',(req,res)=>{
         return res.status(400).json("Please enter otp");
     }
 
-    if(parseInt(otpNumber) === otp){
-        User.findOne({email})
-            .then(user=>{
-                if(!user) return res.status(400).json("User does not exists")
-
-                jwt.sign(
-                    {id:user.id},
-                    config.get('jwtSecret'),
-                    {expiresIn:36000},
-                    (err,token)=>{
-                        if(err) throw err;
-                        res.json({
-                            token,
-                            user:{
-                                id:user.id,
-                                name:user.name,
-                                email:user.email,
-                                role:user.role
-                            }
-                        })
-                    }
-                )
-            })
-        otpNumber=null
-    }else{
-        return res.status(400).json("Please enter valid otp")
-    }
+    OTP.findOne({email})
+        .then(data=>{
+            if(data.otp === parseInt(otp)){
+                User.findOne({email})
+                .then(user=>{
+                    if(!user) return res.status(400).json("User does not exists")
+    
+                    jwt.sign(
+                        {id:user.id},
+                        config.get('jwtSecret'),
+                        {expiresIn:36000},
+                        (err,token)=>{
+                            if(err) throw err;
+                            res.json({
+                                token,
+                                user:{
+                                    id:user.id,
+                                    name:user.name,
+                                    email:user.email,
+                                    role:user.role
+                                }
+                            })
+                        }
+                    )
+                })
+            }else{
+                return res.status(201).json({message:"Please enter valid otp"})
+            }
+        })
 })
 
 module.exports=router;

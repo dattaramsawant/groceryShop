@@ -138,7 +138,7 @@ export default function Department() {
                         />
                         <AddButton 
                             openModal={openModal}
-                            tooltip="Add Department"
+                            tooltip="Add Category"
                         />
                     </div>
                 </AdminTopBar>
@@ -165,7 +165,7 @@ export default function Department() {
                     outSideClick={closeModal}
                     closeModal={closeModal}
                     size="small"
-                    name={editFlag ? "Edit Department":"Add Department"}
+                    name={editFlag ? "Edit Category":"Add Category"}
                 >
                     <DepartmentForm
                         updateState={(data)=>setUpdateState(data)}

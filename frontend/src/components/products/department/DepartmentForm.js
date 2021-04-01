@@ -94,23 +94,23 @@ export default function DepartmentForm(props) {
                         onSubmit={handleSubmit}
                     >
                         <FormInput 
-                            label="Department Name"
+                            label="Category Name"
                             type="text"
                             onBlur={handleBlur}
                             onChange={handleChange}
                             value={values.name}
-                            placeholder="Enter Department Name"
+                            placeholder="Enter Category Name"
                             name="name"
                             touched={touched.name}
                             message={errors.name}
                             disabled={props.editFlag}
                         />
                         <TextBox 
-                            label="Department Description"
+                            label="Category Description"
                             onBlur={handleBlur}
                             onChange={handleChange}
                             value={values.description}
-                            placeholder="Enter Department Description"
+                            placeholder="Enter Category Description"
                             name="description"
                             touched={touched.description}
                             message={errors.description}

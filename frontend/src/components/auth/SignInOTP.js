@@ -6,10 +6,11 @@ import { AUTH, BASEURL, OTPSEND, OTPVERIFY } from '../../api/APIEndpoints'
 import APIServices from '../../api/APIServices'
 import Input from '../../commonComponents/Input'
 
-export default function SignInOTP() {
+export default function SignInOTP(props) {
     const [error,setError]=useState(false)
     const [errorMessage,setErrorMessage]=useState()
     const [otpScreen,setOtpScreen]=useState(false)
+    const [email,setEmail]=useState()
     const [otp,setOtp]=useState({
         otp1:'',
         otp2:'',
@@ -96,7 +97,6 @@ export default function SignInOTP() {
             setOtpNumber(parseInt(otpFinal))
         }
     }
-    console.log(otpNumber)
 
     const signInClick=()=>{
         if(otp.otp1!=="" && otp.otp2!=="" && otp.otp3!=="" && otp.otp4!==""){
@@ -108,24 +108,35 @@ export default function SignInOTP() {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    otp: parseInt(otpFinal)
+                    otp: parseInt(otpFinal),
+                    email: email
                 })
             })
+            .then((res)=>{
+                return res.json()
+            })
             .then((response) => {
-                if(response.status === 400){
+                if(response.token === undefined){
                     setError(true)
+                    setErrorMessage(response.message)
                 }else{
+                    const accessToken=response.token;
+                    const allDetails=response.user;
+                    window.localStorage.setItem("grocery", accessToken);
+                    window.localStorage.setItem("groceryUser", JSON.stringify(allDetails));
+                    props.history.push('/demo')
+                    setTimeout(() => {
+                        window.location.reload()
+                    }, 500)
                     setError(false)
                 }
             })
-            .then(res=>{
-                if(error){
-                    setErrorMessage(res)
-                }else{
-                    console.log(res)
-                }
-            })
         }
+    }
+
+    const emailHandle=(e,values)=>{
+        setEmail(e.target.value)
+        values.email=e.target.value
     }
 
     return (
@@ -157,6 +168,13 @@ export default function SignInOTP() {
                             }
                             const req=await new APIServices().post(url,data)
                             console.log(req)
+                            if(req.status===201){
+                                setError(false)
+                                setOtpScreen(true)
+                            }else{
+                                setError(true)
+                                setOtpScreen(false)
+                            }
                             // fetch(url,{
                             //     method: "POST",
                             //     headers: {
@@ -198,7 +216,7 @@ export default function SignInOTP() {
                                     label="Email"
                                     type="email"
                                     onBlur={handleBlur}
-                                    onChange={handleChange}
+                                    onChange={(e)=>emailHandle(e,values)}
                                     value={values.email}
                                     placeholder="Enter Email"
                                     name="email"
