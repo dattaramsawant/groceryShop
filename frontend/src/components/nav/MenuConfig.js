@@ -28,6 +28,9 @@ export default{
                     {
                         name:'Brand',
                         path:'/dashboard/brand'
+                    },{
+                        name:'Type',
+                        path:'/dashboard/type'
                     },
                     {
                         name:'Products',

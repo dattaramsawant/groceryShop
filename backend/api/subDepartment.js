@@ -10,6 +10,7 @@ router.get('/',auth,(req,res)=>{
     const perPage=parseInt(req.query.limit)
     const page=parseInt(req.query.page)
     const search=req.query.name;
+    // search array of object {name:{$elemMatch:{subCatName:new RegExp(search,"i")}}}
     SubDepartment.find({name:new RegExp(search,"i")})
         .skip(perPage * page)
         .limit(perPage)

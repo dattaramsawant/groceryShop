@@ -1327,3 +1327,6 @@ button:active,button:focus{
   align-items: center;
   cursor: pointer;
 }
+.textBold{
+  font-weight: bold;
+}

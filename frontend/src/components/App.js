@@ -15,6 +15,7 @@ import RouteWithNavbarPreLogin from '../commonComponents/RouteWithNavbarPreLogin
 import RouteWithNavbarPostLoginAdmin from '../commonComponents/RouteWithNavbarPostLoginAdmin'
 import SubCategory from './products/subDepartment/SubCategory'
 import Brand from './products/brand/Brand'
+import Type from './products/type/Type'
 
 export default function App() {
   const dashboard=window.location.pathname.includes('dashboard')
@@ -42,6 +43,7 @@ export default function App() {
             <RouteWithNavbarPostLoginAdmin exact path="/dashboard/product" component={Products} />
             <RouteWithNavbarPostLoginAdmin exact path="/dashboard/productImage" component={ProductBulkUploadImage} />
             <RouteWithNavbarPostLoginAdmin exact path="/dashboard/profile" component={Profile} />
+            <RouteWithNavbarPostLoginAdmin exact path="/dashboard/type" component={Type} />
             <Route path='*' component={PageNotFound} />
           </Switch>
         </Router>
