@@ -8,7 +8,26 @@ const paginatedResults=require('../middleware/paginatedResults');
 const Department=require('../models/Department');
 const Product = require('../models/Product');
 const SubDepartment = require('../models/SubDepartment');
+const multer=require('multer');
+const csv=require('csvtojson');
 
+const storage = multer.diskStorage({  
+    destination:(req,file,cb)=>{  
+        cb(null,'./uploads/category');  
+    },  
+    filename:(req,file,cb)=>{  
+        cb(null,file.originalname + new Date().toISOString());  
+    }  
+});  
+const fileFilter=(req,file,cb)=>{
+    if (file.mimetype === 'text/csv') {
+        cb(null, true);
+    } else {
+        cb(null, false);
+    }
+}
+  
+const uploads = multer({storage:storage,fileFilter:fileFilter});  
 router.get('/',auth,(req,res)=>{
     const perPage=parseInt(req.query.limit)
     const page=parseInt(req.query.page)
@@ -43,7 +62,7 @@ router.post('/',auth,(req,res,next)=>{
                 const departentAdd=new Department({name,description});
                 departentAdd.save()
                     .then(()=>res.status(201).json({message:'Department added successfully'}))
-                    .catch(next);
+                    .catch(err=>console.log(err.keyValue.name));
             }
         })
 })
@@ -120,6 +139,63 @@ router.get('/:id',auth,(req,res)=>{
     Department.findById(req.params.id)
         .then(department=>res.status(200).json(department))
         .catch(err=>res.status(404).json({message:err}))
+})
+
+router.post('/bulk',uploads.single('csv'),auth,async(req,res)=>{
+    var report={
+        success:[],
+        error:[]
+    }
+
+    const department=await Department.find();
+    if(req.file.fieldname === 'csv'){
+        const csv1=await csv().fromFile(req.file.path)
+            csv1.map(async(cat)=>{
+                const check = department.filter(a=>a.name.toLowerCase()===cat.name.toLowerCase())
+                if(cat.name && cat.description){
+                    if(check.length>0){
+                        report.error.push(
+                            {
+                                name:cat.name,
+                                description:cat.description,
+                                status:"Failed",
+                                message:`${cat.name} is already exist.`
+                            }
+                        )
+                    }else{
+                        const departmentData=new Department({
+                            name:cat.name,
+                            description:cat.description
+                        })
+        
+                        departmentData.save()
+                        report.success.push(
+                            {
+                                name:cat.name,
+                                description:cat.description,
+                                status:"Success",
+                                message:`${cat.name} is successfully added.`
+                            }
+                        )
+                    }
+                }else{
+                    const name=cat.name ? '' :'name'
+                    const description=cat.description ? '':'description'
+                    const both=(cat.name || cat.description) ? '' : 'name and edescription'
+                    report.error.push(
+                        {
+                            name:cat.name,
+                            description:cat.description,
+                            status:"Failed",
+                            message:`${both || description || name} is required`
+                        }
+                    )
+                }
+            })
+            res.status(201).json({report})
+    }else{
+        return res.status(400).json({message:"Only csv file is required."})
+    }
 })
 
 module.exports=router;

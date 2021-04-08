@@ -1330,3 +1330,19 @@ button:active,button:focus{
 .textBold{
   font-weight: bold;
 }
+.textCenter{text-align: center;}
+.linkText{
+  padding: 0;
+  margin-right: 5px;
+  color: #007bff;
+  text-decoration: underline;
+}
+.linkText:hover{
+  color:#007bff;
+  text-decoration: underline;
+}
+.bulkSubmitBtn,.bulkCancelBtn{
+  width:49%;
+}
+.bulkCancelBtn{margin-left: 51%;}
+.bulkFileName{color:#dc2c28;font-size: 12px;}
