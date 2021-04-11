@@ -198,4 +198,35 @@ router.post('/bulk',uploads.single('csv'),auth,async(req,res)=>{
     }
 })
 
+router.post('/bulkDelete',auth,async(req,res)=>{
+    const {deleteData}=req.body
+
+    if(deleteData.length>0){
+        let subDepartment=true
+        let department=true
+        let product=true
+
+        SubDepartment.deleteMany({category:deleteData},function(err,results){
+            if(err!==null){
+                subDepartment=false
+            }
+        })
+        Product.deleteMany({category:deleteData},function(err,results){
+            if(err!==null){
+                product=false
+            }
+        })
+        Department.deleteMany({_id:deleteData},function(err,results){
+            if(err!==null){
+                department=false
+            }
+        })
+        if(subDepartment && department && product){
+            return res.status(201).json({message:"Successfully"})
+        }else{
+            return res.status(400).json({message:"Error"})
+        }
+    }
+})
+
 module.exports=router;

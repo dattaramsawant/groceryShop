@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { BASEURL, BULK, DEPARTMENT } from '../../../api/APIEndpoints'
 import APIServices from '../../../api/APIServices'
 
-export default function DepartmentBulkUpload() {
+export default function DepartmentBulkUpload(props) {
     const [file,setFile]=useState(null)
 
     const onFileChange=(e)=>{
@@ -16,6 +16,10 @@ export default function DepartmentBulkUpload() {
         const formData=new FormData()
         formData.append('csv',file)
         const req=await new APIServices().post(url,formData,'form-data')
+        if(!req.error){
+            props.updateState(req.results)
+            props.closeModal()
+        }
     }
     return (
         <div className="textCenter">

@@ -161,7 +161,7 @@ export default function Department() {
                         data={data}
                         editClick={(data)=>editClick(data)}
                         updateState={(data)=>setUpdateState(data)}
-                        deleteDepartment={(data)=>deleteDepartment(data)}                        
+                        deleteDepartment={(data)=>deleteDepartment(data)}                  
                     />
                 </div>
                 <Pagination 
@@ -199,7 +199,10 @@ export default function Department() {
                     size="small"
                     name="Bulk Upload Category"
                 >
-                    <DepartmentBulkUpload />
+                    <DepartmentBulkUpload
+                        updateState={(data)=>setUpdateState(data)}
+                        closeModal={bulkModalClose}
+                    />
                 </Modal>
             }
             {deleteModal &&

@@ -287,6 +287,7 @@ select:focus,select:active{
   background-color: #f55d2c;
   border: none !important;
   color:white;
+  position: relative;
 }
 .dataRow{
   /* text-align: center; */
@@ -1346,3 +1347,8 @@ button:active,button:focus{
 }
 .bulkCancelBtn{margin-left: 51%;}
 .bulkFileName{color:#dc2c28;font-size: 12px;}
+.deleteAllIcon{    
+  font-size: 16px;
+  position: absolute;
+  left: 30px;
+}
