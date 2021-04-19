@@ -65,8 +65,13 @@ export default function Brand() {
     }
 
     useEffect(()=>{
-        fetchData()
-    },[updateState,page,limit])
+        let searchTimer=setTimeout(()=>{
+            fetchData()
+        },1000)
+        
+        return ()=>clearTimeout(searchTimer);
+    },[search,updateState,limit,page])
+    
     useEffect(()=>{
         fetchCategoryData()
         fetchSubCategoryData()
@@ -86,21 +91,6 @@ export default function Brand() {
     const searchHandle=(e)=>{
         setSearch(e.target.value)
     }
-
-    useEffect(()=>{
-        let searchTimer=setTimeout(async()=>{
-            if(search){
-                const url=BASEURL+BRAND+`?brandName=${search}&page=${page}&limit=${limit}`
-                const res=await new APIServices().get(url)
-                setData(res.results.brand)
-                setTotalCount(res.results.totalCount)
-                setCurrentCount(res.results.currentCount)
-            }else{
-                fetchData()
-            }
-        },1000)
-        return ()=>clearTimeout(searchTimer);
-    },[search])
 
     const closeDeleteModal=()=>{
         setDeleteModal(false)
