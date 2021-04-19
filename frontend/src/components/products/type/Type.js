@@ -125,7 +125,6 @@ export default function Type() {
         
         return ()=>clearTimeout(searchTimer);
     },[search,updateState,limit,page])
-    console.log(editDataState)
     return (
         <>
             <div className="dashboardMiddleContent">

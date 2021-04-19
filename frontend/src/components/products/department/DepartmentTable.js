@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { BASEURL, DEPARTMENT } from '../../../api/APIEndpoints'
+import { BASEURL, DELETEBULK, DEPARTMENT } from '../../../api/APIEndpoints'
 import APIServices from '../../../api/APIServices'
+import Modal from '../../../commonComponents/Modal'
 import Tables from '../../../commonComponents/Tables'
 
 export default function DepartmentTable(props) {
@@ -11,6 +12,7 @@ export default function DepartmentTable(props) {
     ])
     const [check,setCheck]=useState({})
     const [allChecked,setAllChecked]=useState(false)
+    const [deleteModal,setDeleteModal]=useState(false)
 
     const handleCheck=(e,data)=>{
         if(allChecked){
@@ -28,16 +30,19 @@ export default function DepartmentTable(props) {
         setCheck({...check,...obj})
         setAllChecked(!allChecked)
     }
-    const deleteAll=async()=>{
+    const deleteAll=()=>{
+        setDeleteModal(Object.keys(check).length>0 ? true : false)
+    }
+    const deleteCategorySuccess=async()=>{
         let arr=[]
         const obj=Object.keys(check).map(key=>key)
         if(obj.length>0){
             obj.map(data=>{
-                if(data){
+                if(check[data]){
                     arr.push(data)
                 }
             })
-            const url=BASEURL+DEPARTMENT+'/bulkDelete'
+            const url=BASEURL+DEPARTMENT+DELETEBULK
             const data={
                 deleteData:arr
             }
@@ -46,8 +51,12 @@ export default function DepartmentTable(props) {
                 props.updateState(req.results)
                 setAllChecked(false)
                 setCheck({})
+                setDeleteModal(false)
             }
         }
+    }
+    const deleteModalClose=()=>{
+        setDeleteModal(false)
     }
     return (
         <>
@@ -74,6 +83,28 @@ export default function DepartmentTable(props) {
                     </tr>
                 ))}
             </Tables>
+            {deleteModal &&
+                <Modal
+                    outSideClick={deleteModalClose}
+                    closeModal={deleteModalClose}
+                    size="small"
+                    name="Bulk Delete Category"
+                >
+                    <p>Are you sure you want to delete all selected category?</p>
+                    <button
+                        className="primaryDeleteButton modalButton"
+                        onClick={deleteCategorySuccess}
+                    >
+                        Delete
+                    </button>
+                    <button
+                        className="secondaryDeleteButton modalButton"
+                        onClick={deleteModalClose}
+                    >
+                        Cancel
+                    </button>
+                </Modal>
+            }
         </>
     )
 }

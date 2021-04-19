@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { BASEURL,BRAND, DEPARTMENT, SUBDEPARTMENT } from '../../../api/APIEndpoints'
 import APIServices from '../../../api/APIServices'
 import AddButton from '../../../commonComponents/AddButton'
+import BulkUploadButton from '../../../commonComponents/BulkUploadButton'
 import Modal from '../../../commonComponents/Modal'
 import Pagination from '../../../commonComponents/Pagination'
 import SearchButton from '../../../commonComponents/SearchButton'
 import AdminTopBar from '../../nav/AdminTopBar'
+import BrandBulkUpload from './BrandBulkUpload'
 import BrandForm from './BrandForm'
 import BrandTable from './BrandTable'
 
@@ -27,6 +29,7 @@ export default function Brand() {
     const [toasterStatus,setToasterStatus]=useState('')
     const [deleteModal,setDeleteModal]=useState(false)
     const [deleteData,setDeleteData]=useState({})
+    const [bulkModal,setBulkModal]=useState(false)
 
     const openModal=()=>{
         setModal(!modal)
@@ -135,7 +138,12 @@ export default function Brand() {
         }
     }
     
-
+    const openBulkModal=()=>{
+        setBulkModal(!bulkModal)
+    }
+    const bulkModalClose=()=>{
+        setBulkModal(false)
+    }
     return (
         <>
             <div className="dashboardMiddleContent">
@@ -152,6 +160,10 @@ export default function Brand() {
                         <AddButton 
                             openModal={openModal}
                             tooltip="Add Brand"
+                        />
+                        <BulkUploadButton
+                            openModal={openBulkModal}
+                            tooltip="Bulk Upload Brand"
                         />
                     </div>
                 </AdminTopBar>
@@ -197,7 +209,19 @@ export default function Brand() {
                     />
                 </Modal>
             }
-
+            {bulkModal &&
+                <Modal
+                    outSideClick={bulkModalClose}
+                    closeModal={bulkModalClose}
+                    size="small"
+                    name="Bulk Upload Brand"
+                >
+                    <BrandBulkUpload
+                        updateState={(data)=>setUpdateState(data)}
+                        closeModal={bulkModalClose}
+                    />
+                </Modal>
+            }
             {deleteModal &&
                 <Modal
                     outSideClick={closeDeleteModal}

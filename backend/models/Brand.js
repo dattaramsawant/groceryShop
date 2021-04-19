@@ -11,10 +11,7 @@ const BrandSchema=new Schema({
         type:Schema.Types.ObjectId,
         ref:'Department',
         require:[true,"Brand Category is Required"]
-    }],
-    brandLogo:{
-        type:String
-    }
+    }]
 },{
     timestamps:true
 })

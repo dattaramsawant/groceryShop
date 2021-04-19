@@ -138,8 +138,7 @@ export default function BrandForm(props) {
             <Formik
                 initialValues={{
                     brandName:props.editFlag ? props.editData.brandName : '',
-                    brandCategory:props.editFlag ? props.editData.brandCategory : [],
-                    brandLogo:''
+                    brandCategory:props.editFlag ? props.editData.brandCategory : []
                 }}
 
                 validationSchema={validationSchema}
@@ -150,20 +149,9 @@ export default function BrandForm(props) {
                         const url=BASEURL+BRAND+'/'+props.editData._id
                         const data={
                             // brandName:values.brandName,
-                            brandCategory:values.brandCategory,
-                            brandLogo:values.brandLogo
+                            brandCategory:values.brandCategory
                         }
-                        const formData= new FormData()
-                        Object.keys(data).map((d,i)=>(
-                            // formData.append(d,data[d])
-                            d === 'brandCategory' ? 
-                            data[d].map(cat =>(
-                                formData.append(d,cat)
-                            ))
-                            :
-                            formData.append(d,data[d])
-                        ))
-                        const req=await new APIServices().patch(url,formData,'form-data')
+                        const req=await new APIServices().patch(url,data)
                         if(req.error){
                             props.setToaster(true)
                             props.setToasterMsg(req.results.message)
@@ -181,20 +169,9 @@ export default function BrandForm(props) {
                         const url=BASEURL+BRAND
                         const data={
                             brandName:values.brandName,
-                            brandCategory:values.brandCategory,
-                            brandLogo:values.brandLogo
+                            brandCategory:values.brandCategory
                         }
-                        const formData= new FormData()
-                        Object.keys(data).map((d,i)=>(
-                            // formData.append(d,data[d])
-                            d === 'brandCategory' ? 
-                            data[d].map(cat =>(
-                                formData.append(d,cat)
-                            ))
-                            :
-                            formData.append(d,data[d])
-                        ))
-                        const req=await new APIServices().post(url,formData,'form-data')
+                        const req=await new APIServices().post(url,data)
                         if(req.error){
                             props.setToaster(true)
                             props.setToasterMsg(req.results.message)
@@ -268,37 +245,6 @@ export default function BrandForm(props) {
                                 }
                                <ErrorValidation touched={touched.brandCategory} message={errors.brandCategory}/>
                             </span>
-                        </div>
-
-                        <div>
-                            <input
-                                accept=".jpg,png,.jpeg,.svg"
-                                // className={classes.input}
-                                id="contained-button-file"
-                                type="file"
-                                name='brandLogo'
-                                onChange={(e)=>onFileChange(e,values)}
-                                value=""
-                                style={{display:'none'}}
-                            />
-                            <label htmlFor="contained-button-file" className="addDataPrimaryButton">
-                                Choose images
-                            </label>
-                        </div>
-                        <div className="d-flex flex-wrap">
-                            {imgURL &&
-                                <div className='imgPreviewMain'>
-                                    <img src={imgURL} className="uploadImgPreview mr-2 mb-2 mt-2" />
-                                    <img src='/icons/close.svg' className="imgRemoveIcon cursor" onClick={()=>removeImg(values)} />
-                                </div>
-                            }
-
-                            {(props.editFlag && imgURLDB) &&
-                                <div className='imgPreviewMain'>
-                                    <img src={imgURLDB} className="uploadImgPreview mr-2 mb-2 mt-2" />
-                                    <img src='/icons/close.svg' className="imgRemoveIcon cursor" onClick={()=>removeImgDB(values)} />
-                                </div>
-                            }
                         </div>
 
                         <button

@@ -6,6 +6,7 @@ import Signup from './auth/Signup'
 import DemoTwo from './demo/DemoTwo'
 import User from './userManagement/User'
 import Department from './products/department/Department'
+import DepartmentReport from './products/department/DepartmentReport'
 import Products from './products/Products'
 import Profile from './profile/Profile'
 import ProductBulkUploadImage from './products/ProductBulkUploadImage'
@@ -16,6 +17,8 @@ import RouteWithNavbarPostLoginAdmin from '../commonComponents/RouteWithNavbarPo
 import SubCategory from './products/subDepartment/SubCategory'
 import Brand from './products/brand/Brand'
 import Type from './products/type/Type'
+import SubCategoryReport from './products/subDepartment/SubCategoryReport'
+import BrandReport from './products/brand/BrandReport'
 
 export default function App() {
   const dashboard=window.location.pathname.includes('dashboard')
@@ -38,8 +41,11 @@ export default function App() {
             <RouteWithNavbarPostLoginAdmin exact path="/dashboard" component={DemoTwo} />
             <RouteWithNavbarPostLoginAdmin exact path="/dashboard/user" component={User} />
             <RouteWithNavbarPostLoginAdmin exact path="/dashboard/category" component={Department} />
+            <RouteWithNavbarPostLoginAdmin exact path="/dashboard/categoryReport" component={DepartmentReport} />
             <RouteWithNavbarPostLoginAdmin exact path="/dashboard/subCategory" component={SubCategory} />
+            <RouteWithNavbarPostLoginAdmin exact path="/dashboard/subCategoryReport" component={SubCategoryReport} />
             <RouteWithNavbarPostLoginAdmin exact path="/dashboard/brand" component={Brand} />
+            <RouteWithNavbarPostLoginAdmin exact path="/dashboard/brandReport" component={BrandReport} />
             <RouteWithNavbarPostLoginAdmin exact path="/dashboard/product" component={Products} />
             <RouteWithNavbarPostLoginAdmin exact path="/dashboard/productImage" component={ProductBulkUploadImage} />
             <RouteWithNavbarPostLoginAdmin exact path="/dashboard/profile" component={Profile} />

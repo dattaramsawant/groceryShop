@@ -1,14 +1,13 @@
 import React, { useState } from 'react'
-import { BASEURL, DELETEBULK, SUBDEPARTMENT } from '../../../api/APIEndpoints'
+import { BASEURL,DELETEBULK, SUBDEPARTMENTREPORT } from '../../../api/APIEndpoints'
 import APIServices from '../../../api/APIServices'
 import Modal from '../../../commonComponents/Modal'
 import Tables from '../../../commonComponents/Tables'
 
-export default function SubCategoryTable(props) {
+export default function SubCategoryReportTable(props) {
     const [header]=useState([
-        {headerName:"Category"},
-        {headerName:"Sub-Category"},
-        {headerName:"Description"},
+        {headerName:"File Name"},
+        {headerName:"Created At"},
         {headerName:"Action"},
     ])
     const [check,setCheck]=useState({})
@@ -34,16 +33,16 @@ export default function SubCategoryTable(props) {
     const deleteAll=()=>{
         setDeleteModal(Object.keys(check).length>0 ? true : false)
     }
-    const deleteSubCategorySuccess=async()=>{
+    const deleteCategoryReportSuccess=async()=>{
         let arr=[]
         const obj=Object.keys(check).map(key=>key)
         if(obj.length>0){
             obj.map(data=>{
-                if(check[data]){
+                if(data){
                     arr.push(data)
                 }
             })
-            const url=BASEURL+SUBDEPARTMENT+DELETEBULK
+            const url=BASEURL+SUBDEPARTMENTREPORT+DELETEBULK
             const data={
                 deleteData:arr
             }
@@ -59,43 +58,59 @@ export default function SubCategoryTable(props) {
     const deleteModalClose=()=>{
         setDeleteModal(false)
     }
+
     return (
         <>
-            <Tables 
+            <Tables
                 header={header}
                 checkbox={true}
                 handleChange={checkAll}
                 checked={allChecked}
                 deleteAll={deleteAll}
             >
-                {props.data && props.data.map(data=>(
-                    <tr key={data._id} className="dataRow">
-                        <td>
-                            <input type="checkbox" checked={check[data._id]} onChange={(e)=>handleCheck(e,data)} />
-                        </td>
-                        <td>{data.category.name}</td>
-                        <td>{data.name}</td>
-                        <td>{data.description}</td>
-                        <td>
-                            <div className="d-flex align-items-center">
-                                <img src='/icons/pencil.svg' className="editIcon cursor" onClick={()=>props.editClick(data)}/>
-                                <img src='/icons/delete.svg'className="deleteIcon cursor" onClick={()=>props.deleteSubDepartment(data)} />
-                            </div>
-                        </td>
-                    </tr>
-                ))}
+                {props.data.map(data=>{
+                    const dateTime=new Date(data.createdAt)
+                    const date=('0' + dateTime.getDate()).slice(-2)
+                    const month=dateTime.getMonth()
+                    const year=dateTime.getFullYear()
+                    let hour=dateTime.getHours()
+                    const min=('0' + dateTime.getMinutes()).slice(-2)
+                    const monthArr=['January','February','March','April','May','June','July','August','September','October','November','December']
+                    const ampm=hour>=12?'pm':'am'
+                    hour=(hour%12) || 12
+                    hour=('0' + hour).slice(-2)
+                    const fullDate=date+'-'+monthArr[month]+'-'+year+' '+hour+':'+min+ampm
+
+                    return (
+                        <tr key={data._id} className="dataRow">
+                            <td>
+                                <input type="checkbox" checked={check[data._id]} onChange={(e)=>handleCheck(e,data)} />
+                            </td>
+                            <td>{data.fileName}</td>
+                            <td>{fullDate}</td>
+                            <td>
+                                <div className="d-flex align-items-center">
+                                    <a href={data.file} download>
+                                        <i className="fa fa-download cursor"></i>
+                                    </a>
+                                    <img src='/icons/delete.svg'className="deleteIcon cursor" onClick={()=>props.deleteReport(data)} />
+                                </div>
+                            </td>
+                        </tr>
+                    )
+                })}
             </Tables>
             {deleteModal &&
                 <Modal
                     outSideClick={deleteModalClose}
                     closeModal={deleteModalClose}
                     size="small"
-                    name="Bulk Delete Sub-Category"
+                    name="Bulk Delete Sub-Category Report"
                 >
-                    <p>Are you sure you want to delete all selected sub-category?</p>
+                    <p>Are you sure you want to delete all selected sub-category report?</p>
                     <button
                         className="primaryDeleteButton modalButton"
-                        onClick={deleteSubCategorySuccess}
+                        onClick={deleteCategoryReportSuccess}
                     >
                         Delete
                     </button>

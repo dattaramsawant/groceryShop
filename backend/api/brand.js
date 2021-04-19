@@ -4,34 +4,29 @@ const auth=require('../middleware/auth');
 
 const Brand=require('../models/Brand');
 const Product = require('../models/Product');
-
 const multer=require('multer');
-const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
-    cb(null, './uploads/brandLogo/');
-  },
-  filename: function(req, file, cb) {
-    cb(null, new Date().toISOString() + file.originalname);
-  }
-});
+const csv=require('csvtojson');
+const fs = require('fs');
+const Department = require('../models/Department');
+const BrandReport = require('../models/BrandReport');
 
-const fileFilter = (req, file, cb) => {
-  // reject a file
-  if (file.mimetype === 'image/jpeg' ||file.mimetype === 'image/jpg' || file.mimetype === 'image/png' || file.mimetype === 'image/svg' || file.mimetype === 'image/svg+xml') {
-    cb(null, true);
-  } else {
-    cb(null, false);
-  }
-};
-
-const upload = multer({
-  storage: storage,
-//   limits: {
-//     fileSize: 1024 * 1024 * 2
-//   }
-//   fileFilter: fileFilter
-});
-
+const storage = multer.diskStorage({  
+    destination:(req,file,cb)=>{  
+        cb(null,'./uploads/brand');  
+    },  
+    filename:(req,file,cb)=>{  
+        cb(null,new Date().toISOString() + file.originalname);  
+    }  
+});  
+const fileFilter=(req,file,cb)=>{
+    if (file.mimetype === 'text/csv') {
+        cb(null, true);
+    } else {
+        cb(null, false);
+    }
+}
+  
+const uploads = multer({storage:storage,fileFilter:fileFilter}); 
 router.get('/',auth,(req,res)=>{
     const perPage=parseInt(req.query.limit)
     const page=parseInt(req.query.page)
@@ -52,10 +47,8 @@ router.get('/',auth,(req,res)=>{
         })
 })
 
-router.post('/',auth,upload.single('brandLogo'),(req,res,next)=>{
+router.post('/',auth,(req,res,next)=>{
     const {brandName,brandCategory}=req.body;
-    const base_url="http://localhost:5000/"
-    console.log(req.file.path)
 
     // if(!name,!description){
     //     return res.status(400).json({message:'Please enter all details'});
@@ -67,8 +60,7 @@ router.post('/',auth,upload.single('brandLogo'),(req,res,next)=>{
                 return res.status(400).json({message:'Brand Name name already exists'});
             } else{
                 const brandAdd=new Brand({
-                    brandName,brandCategory,
-                    brandLogo:base_url + req.file.path
+                    brandName,brandCategory
                 });
                 brandAdd.save()
                     .then(()=>res.status(201).json({message:'Brand added successfully'}))
@@ -77,14 +69,13 @@ router.post('/',auth,upload.single('brandLogo'),(req,res,next)=>{
         })
 })
 
-router.patch('/:id',upload.single('brandLogo'),auth,(req,res,next)=>{
+router.patch('/:id',auth,(req,res,next)=>{
     const {brandName,brandCategory}=req.body
     const base_url="http://localhost:5000/"
 
     Brand.findByIdAndUpdate(req.params.id)
     .then(brd=>{
         brd.brandCategory=brandCategory
-        brd.brandLogo=req.file && base_url + req.file.path
 
         brd.save()
             .then(()=>res.status(200).json({message:"Brand update successfully"}))
@@ -130,6 +121,120 @@ router.get('/:id',auth,(req,res)=>{
         .populate('brandCategory','_id name')
         .then(brand=>res.status(200).json(brand))
         .catch(err=>res.status(404).json({message:err}))
+})
+
+router.post('/bulk',uploads.single('csv'),auth,async(req,res)=>{
+    var report={
+        success:[],
+        error:[]
+    }
+    const base_url="http://localhost:5000/"
+
+    const brand=await Brand.find();
+    const department=await Department.find();
+
+    if(req.file.fieldname === 'csv'){
+        const csv1=await csv().fromFile(req.file.path)
+            csv1.map(async(data)=>{
+                const categoryArr=data.brandCategory.split(';');
+                const checkCat=[]
+                const checkCatString=[]
+                categoryArr.filter(cat=>{
+                    department.filter(dep=>{
+                        if(dep.name.toLowerCase().trim() == cat.toLowerCase().trim()){
+                            checkCat.push(dep._id)
+                            checkCatString.push(dep.name)
+                        }
+                    })
+                })
+                const check = brand.filter(a=>a.brandName.toLowerCase().trim()===data.brandName.toLowerCase().trim())
+                const reportCheck= report.success.filter(a=>a.brandName.toLowerCase().trim() === data.brandName.toLowerCase().trim())
+                
+                if(data.brandName && data.brandCategory){
+                    if(check.length>0 || reportCheck.length>0){
+                        if(checkCat.length==0){
+                            report.error.push({
+                                brandName:data.brandName,
+                                brandCategory:data.brandCategory,
+                                status:"Failed",
+                                message:`Category not exist.`
+                            })
+                        }else{
+                            report.error.push(
+                                {
+                                    brandName:data.brandName,
+                                    brandCategory:data.brandCategory,
+                                    status:"Failed",
+                                    message:`${data.brandName} is already exist.`
+                                }
+                            )
+                        }
+                    }else{
+                        if(checkCat.length==0){
+                            report.error.push({
+                                brandName:data.brandName,
+                                brandCategory:data.brandCategory,
+                                status:"Failed",
+                                message:`Category not exist.`
+                            })
+                        }else{
+                            const brandData=new Brand({
+                                brandName:data.brandName,
+                                brandCategory:checkCat
+                            })
+                            brandData.save()
+                            report.success.push(
+                                {
+                                    brandName:data.brandName,
+                                    brandCategory:checkCatString,
+                                    status:"Success",
+                                    message:`${data.brandName} is successfully added.`
+                                }
+                            )
+                        }
+                    }
+                }else{
+                    const brandName=data.brandName ? '' :'brandName'
+                    const brandCategory=data.brandCategory ? '' : 'brandCategory'
+                    const both=(data.brandName || data.brandCategory) ? '' : 'brandName and brandCategory'
+                    report.error.push(
+                        {
+                            brandName:data.brandName,
+                            brandCategory:data.brandCategory,
+                            status:"Failed",
+                            message:`${both || brandCategory || brandName} is required`
+                        }
+                    )
+                }
+            })
+            const reportData=report.success.concat(report.error)
+            const objectToCSV=function(reportData){
+                const csvRows=[]
+                const headers=Object.keys(reportData[0]);
+                csvRows.push(headers.join(','));
+                for(const row of reportData){
+                    const values=headers.map(header=>{
+                        const escaped=(row[header].toString()).replace(/"/g, '\\"');
+                        return `"${escaped}"`
+                    })
+                    csvRows.push(values.join(','));
+                }
+                return csvRows.join('\n')
+            }
+            const csvData=objectToCSV(reportData)
+            fs.writeFileSync(`./uploads/brand/report/${req.file.filename}`,csvData)
+            const brandReportData=new BrandReport({
+                fileName:req.file.filename,
+                file:base_url+`uploads/brand/report/${req.file.filename}`
+            })
+            brandReportData.save()
+                .then(()=>res.status(201).json({message:"Successful"}))
+                .catch((err)=>res.status(400).json({error:err}))
+            // res.status(201).json({report})
+            
+    }else{
+        return res.status(400).json({message:"Only csv file is required."})
+    }
 })
 
 module.exports=router;
@@ -182,10 +287,6 @@ module.exports=router;
 *         in: formData
 *         type: string
 *         required: true
-*       - name: brandLogo
-*         in: formData
-*         type: file
-*         required: false
 *     responses:
 *       201:
 *         description: Brand created
@@ -214,10 +315,6 @@ module.exports=router;
 *         in: formData
 *         type: string
 *         required: true
-*       - name: brandLogo
-*         in: formData
-*         type: file
-*         required: false
 *     responses:
 *      200:
 *        description: Brand updated
@@ -245,10 +342,6 @@ module.exports=router;
 *         in: formData
 *         type: string
 *         required: true
-*       - name: brandLogo
-*         in: formData
-*         type: file
-*         required: false
 *     responses:
 *      200:
 *        description: Brand updated

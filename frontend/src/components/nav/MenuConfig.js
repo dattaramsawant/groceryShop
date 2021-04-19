@@ -11,16 +11,6 @@ export default{
                 name:'User Managment',
                 icon:'fa fa-users'
             },
-            // {
-            //     path:'/dashboard/department',
-            //     name:'Department',
-            //     icon:'fa fa-columns'
-            // },
-            // {
-            //     path:'/dashboard/product',
-            //     name:'Product',
-            //     icon:'fa fa-columns'
-            // },
             {
                 groupName:"Product Management",
                 icon:'fa fa-columns',
@@ -28,6 +18,9 @@ export default{
                     {
                         name:'Brand',
                         path:'/dashboard/brand'
+                    },{
+                        name:'Brand Report',
+                        path:'/dashboard/brandReport'
                     },{
                         name:'Type',
                         path:'/dashboard/type'
@@ -42,8 +35,14 @@ export default{
                         name:'Category',
                         path:'/dashboard/category'
                     },{
+                        name:'Category Report',
+                        path:'/dashboard/categoryReport'
+                    },{
                         name:'Sub Category',
                         path:'/dashboard/subCategory'
+                    },{
+                        name:'Sub-Category Report',
+                        path:'/dashboard/subCategoryReport'
                     },
 
                 ]

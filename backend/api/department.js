@@ -1,6 +1,5 @@
 const c = require('config');
 const express=require('express');
-const { isValidObjectId } = require('mongoose');
 const router=express.Router();
 const auth=require('../middleware/auth');
 const paginatedResults=require('../middleware/paginatedResults');
@@ -8,15 +7,19 @@ const paginatedResults=require('../middleware/paginatedResults');
 const Department=require('../models/Department');
 const Product = require('../models/Product');
 const SubDepartment = require('../models/SubDepartment');
+const Type = require('../models/Type');
+const DepartmentReport=require('../models/DepartmentReport');
 const multer=require('multer');
 const csv=require('csvtojson');
+const fs = require('fs');
+const Brand = require('../models/Brand');
 
 const storage = multer.diskStorage({  
     destination:(req,file,cb)=>{  
         cb(null,'./uploads/category');  
     },  
     filename:(req,file,cb)=>{  
-        cb(null,file.originalname + new Date().toISOString());  
+        cb(null,new Date().toISOString() + file.originalname);  
     }  
 });  
 const fileFilter=(req,file,cb)=>{
@@ -106,26 +109,55 @@ router.put('/:id',auth,(req,res,next)=>{
 })
 
 router.delete('/:id',auth,async(req,res)=>{
-    const subDepartment =await SubDepartment.find();
-    const subDepartmentFilter=subDepartment.filter(subCat=>subCat.category == req.params.id)
+    const type=await Type.find({"typeDetails.category":req.params.id});
+    const brand = await Brand.find({"brandCategory":req.params.id});
 
-    const product=await Product.find();
-    const productFilter=product.filter(prd=>prd.category == req.params.id)
-    
-    if(productFilter.length > 0){
-        productFilter.map(data=>{
-            Product.deleteOne({_id:data._id},function(err,results){
-
-            });
+    console.log(type,'type')
+    console.log(brand,'brand')
+    brand.filter(async(data)=>{
+        const brandCategory=[]
+        data.brandCategory.filter(data2=>{
+            if(data2!=req.params.id){
+                brandCategory.push(data2)
+            }
         })
-    }
-    if(subDepartmentFilter.length > 0){
-        subDepartmentFilter.map(data=>{
-            SubDepartment.deleteOne({_id:data._id},function(err,results){
+        if(brandCategory.length>0){
+            Brand.updateOne({_id:data._id},{$set:{brandCategory:brandCategory}},function(){
+                
+            })
+        }
+        else{
+            Brand.remove({_id:data._id},function(){
 
-            });
+            })
+        }
+    })
+
+    type.filter(data=>{
+        const typeDetails=[]
+        const id=data._id
+        data.typeDetails.map(data2=>{
+            if(data2.category != req.params.id){
+                typeDetails.push(data2)
+            }
         })
-    }
+        if(typeDetails.length>0){
+            Type.updateOne({_id:id},{$set:{typeDetails:typeDetails}},function(){
+                            
+            })
+        }else{
+            Type.remove({_id:id},function(err,results){
+
+            })
+        }
+    })
+
+    Product.remove({category:req.params.id},function(err,results){
+
+    })
+    SubDepartment.remove({category:req.params.id},function(err,results){
+        
+    })
     Department.findByIdAndDelete(req.params.id)
         .then(department=>
             department.remove()
@@ -146,14 +178,17 @@ router.post('/bulk',uploads.single('csv'),auth,async(req,res)=>{
         success:[],
         error:[]
     }
+    const base_url="http://localhost:5000/"
 
     const department=await Department.find();
     if(req.file.fieldname === 'csv'){
         const csv1=await csv().fromFile(req.file.path)
             csv1.map(async(cat)=>{
-                const check = department.filter(a=>a.name.toLowerCase()===cat.name.toLowerCase())
+                const check = department.filter(a=>a.name.toLowerCase().trim()===cat.name.toLowerCase().trim())
+                const reportCheck= report.success.filter(a=>a.name.toLowerCase().trim() === cat.name.toLowerCase().trim())
+                
                 if(cat.name && cat.description){
-                    if(check.length>0){
+                    if(check.length>0 || reportCheck.length>0){
                         report.error.push(
                             {
                                 name:cat.name,
@@ -192,13 +227,37 @@ router.post('/bulk',uploads.single('csv'),auth,async(req,res)=>{
                     )
                 }
             })
-            res.status(201).json({report})
+            const data=report.success.concat(report.error)
+            const objectToCSV=function(data){
+                const csvRows=[]
+                const headers=Object.keys(data[0]);
+                csvRows.push(headers.join(','));
+                for(const row of data){
+                    const values=headers.map(header=>{
+                        const escaped=(row[header].toString()).replace(/"/g, '\\"');
+                        return `"${escaped}"`
+                    })
+                    csvRows.push(values.join(','));
+                }
+                return csvRows.join('\n')
+            }
+            const csvData=objectToCSV(data)
+            fs.writeFileSync(`./uploads/category/report/${req.file.filename}`,csvData)
+            const departmentReportData=new DepartmentReport({
+                fileName:req.file.filename,
+                file:base_url+`uploads/category/report/${req.file.filename}`
+            })
+            departmentReportData.save()
+                .then(()=>res.status(201).json({message:"Successful"}))
+                .catch((err)=>res.status(400).json({error:err}))
+            // res.status(201).json({report})
+            
     }else{
         return res.status(400).json({message:"Only csv file is required."})
     }
 })
 
-router.post('/bulkDelete',auth,async(req,res)=>{
+router.post('/deleteBulk',auth,async(req,res)=>{
     const {deleteData}=req.body
 
     if(deleteData.length>0){
@@ -220,6 +279,32 @@ router.post('/bulkDelete',auth,async(req,res)=>{
             if(err!==null){
                 department=false
             }
+        })
+
+        deleteData.map(async(delData)=>{
+            const type=await Type.find({"typeDetails.category":delData});
+            type.map(data=>{
+                const id=data._id
+                const typeDetails=[]
+                data.typeDetails.some(data2=>{
+                    console.log(data2,'data2')
+                    console.log(data2.category,'category')
+                    console.log(data2.category == delData,'check')
+                    if(data2.category != delData){
+                        typeDetails.push(data2)
+                    }
+                })
+                if(typeDetails.length>0){
+                    Type.updateOne({_id:id},{$set:{typeDetails:typeDetails}},function(){
+
+                    })
+                }else{
+                    Type.deleteOne({_id:id},function(){
+
+                    })
+                }
+                console.log(typeDetails,'typeDetails')
+            })
         })
         if(subDepartment && department && product){
             return res.status(201).json({message:"Successfully"})

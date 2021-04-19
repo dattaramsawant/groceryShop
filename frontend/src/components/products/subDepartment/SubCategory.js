@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { BASEURL,DEPARTMENT,SUBDEPARTMENT } from '../../../api/APIEndpoints'
 import APIServices from '../../../api/APIServices'
 import AddButton from '../../../commonComponents/AddButton'
+import BulkUploadButton from '../../../commonComponents/BulkUploadButton'
 import Modal from '../../../commonComponents/Modal'
 import Pagination from '../../../commonComponents/Pagination'
 import SearchButton from '../../../commonComponents/SearchButton'
 import AdminTopBar from '../../nav/AdminTopBar'
+import SubCategoryBulkUpload from './SubCategoryBulkUpload'
 import SubCategoryForm from './SubCategoryForm'
 import SubCategoryTable from './SubCategoryTable'
 
@@ -26,6 +28,7 @@ export default function SubCategory() {
     const [toasterStatus,setToasterStatus]=useState('')
     const [deleteModal,setDeleteModal]=useState(false)
     const [deleteData,setDeleteData]=useState({})
+    const [bulkModal,setBulkModal]=useState(false)
 
     const openModal=()=>{
         setModal(!modal)
@@ -128,6 +131,13 @@ export default function SubCategory() {
             setDeleteModal(false)
         }
     }
+
+    const openBulkModal=()=>{
+        setBulkModal(!bulkModal)
+    }
+    const bulkModalClose=()=>{
+        setBulkModal(false)
+    }
     return (
         <>
             <div className="dashboardMiddleContent">
@@ -144,6 +154,10 @@ export default function SubCategory() {
                         <AddButton 
                             openModal={openModal}
                             tooltip="Add SubDepartment"
+                        />
+                        <BulkUploadButton 
+                            openModal={openBulkModal}
+                            tooltip="Bulk Upload Sub-Category"
                         />
                     </div>
                 </AdminTopBar>
@@ -185,6 +199,19 @@ export default function SubCategory() {
                         setToaster={(data)=>setToaster(data)}
                         setToasterMsg={(data)=>setToasterMsg(data)}
                         setToasterStatus={(data)=>setToasterStatus(data)}
+                    />
+                </Modal>
+            }
+            {bulkModal &&
+                <Modal
+                    outSideClick={bulkModalClose}
+                    closeModal={bulkModalClose}
+                    size="small"
+                    name="Bulk Upload Category"
+                >
+                    <SubCategoryBulkUpload
+                        updateState={(data)=>setUpdateState(data)}
+                        closeModal={bulkModalClose}
                     />
                 </Modal>
             }
