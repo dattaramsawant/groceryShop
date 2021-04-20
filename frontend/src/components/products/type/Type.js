@@ -26,7 +26,6 @@ export default function Type() {
     const [deleteData,setDeleteData]=useState({})
     const [updateState,setUpdateState]=useState()
     const [category,setCategory]=useState([])
-    const [subCategory,setSubCategory]=useState([])
 
     const searchHandle=(e)=>{
         setSearch(e.target.value)
@@ -106,17 +105,9 @@ export default function Type() {
             setCategory(res.results.department)
         }
     }
-    const fetchSubCategory=async()=>{
-        const url=BASEURL+SUBDEPARTMENT
-        const res=await new APIServices().get(url)
-        if(!res.error){
-            setSubCategory(res.results.subDepartment)
-        }
-    }
 
     useEffect(()=>{
         fetchCategory()
-        fetchSubCategory()
     },[])
     useEffect(()=>{
         let searchTimer=setTimeout(()=>{
@@ -178,7 +169,6 @@ export default function Type() {
                         editFlag={editFlag}
                         editData={editDataState}
                         category={category}
-                        subCategory={subCategory}
                         // brandCategory={brandCategory}
                         // brandSubCategory={brandSubCategory}
                         setToaster={(data)=>setToaster(data)}

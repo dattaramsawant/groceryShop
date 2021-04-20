@@ -20,7 +20,7 @@ const hour=currentDate.getHours()
 const min=currentDate.getMinutes()
 const sec=currentDate.getSeconds()
 const fullTime=date+'/'+month+'/'+year+'T'+hour+':'+min+':'+sec
-console.log(fullTime)
+
 const storage = multer.diskStorage({  
     destination:(req,file,cb)=>{  
         cb(null,'./uploads/subCategory');  
@@ -47,7 +47,7 @@ router.get('/',auth,(req,res)=>{
     SubDepartment.find({name:new RegExp(search,"i")})
         .skip(perPage * page)
         .limit(perPage)
-        .populate('category','_id name')
+        // .populate('category','_id name')
         .sort({createdAt:-1})
         .then(subDepartment=>{
             SubDepartment.countDocuments().then(count=>{
@@ -61,19 +61,19 @@ router.get('/',auth,(req,res)=>{
 })
 
 router.post('/',auth,(req,res,next)=>{
-    const {name,description,category}=req.body;
+    const {name,description}=req.body;
 
     // if(!name,!description){
     //     return res.status(400).json({message:'Please enter all details'});
     // }
-    SubDepartment.findOne({name,category})
+    SubDepartment.findOne({name})
         .then(subDepartment=>{
             if(subDepartment){
-                if(subDepartment.category == category && subDepartment.name == name) {
+                if(subDepartment.name == name) {
                     return res.status(400).json({message:'Sub-Category name already exists'});
                 }
             } else{
-                const departentAdd=new SubDepartment({name,description,category});
+                const departentAdd=new SubDepartment({name,description});
                 departentAdd.save()
                     .then(()=>res.status(201).json({message:'subDepartment added successfully'}))
                     .catch(next);
@@ -82,21 +82,20 @@ router.post('/',auth,(req,res,next)=>{
 })
 
 router.patch('/:id',auth,(req,res,next)=>{
-    const {name,category}=req.body
-    SubDepartment.findOne({name,category})
+    const {name}=req.body
+    SubDepartment.findOne({name})
         .then(dep=>{
             if(dep){
-                if(dep.category == category && dep.name == name) {
+                if(dep.name == name) {
                     return res.status(400).json({message:'Sub-Category name already exists'});
                 }
             } else{
                 SubDepartment.findByIdAndUpdate(req.params.id)
                 .then(subDepartment=>{
                     subDepartment.description=req.body.description
-                    subDepartment.name=req.body.name
         
                     subDepartment.save()
-                        .then(()=>res.status(200).json({message:"SubDepartment update successfully"}))
+                        .then(()=>res.status(200).json({message:"SUbDepartment update successfully"}))
                         .catch(next)
                 })
             }
@@ -125,54 +124,60 @@ router.put('/:id',auth,(req,res,next)=>{
 })
 
 router.delete('/:id',auth,async(req,res)=>{
-    const product=await Product.find();
-    const productFilter=product.filter(prd=>prd.subCategory == req.params.id)
+    // const product=await Product.find();
+    // const productFilter=product.filter(prd=>prd.subCategory == req.params.id)
 
-    const type=await Type.find();
-    const typeFilter=type.filter(a=>a.typeDetails.filter(b=>b.subCategory.filter(c=>c._id==req.params.id)))
+    // const type=await Type.find();
+    // const typeFilter=type.filter(a=>a.typeDetails.filter(b=>b.subCategory.filter(c=>c._id==req.params.id)))
     
-    if(typeFilter.length>0){
-        typeFilter.map(data=>{
-            const id=data._id
-            const typeDetails=[]
-            const subCategory=[]
-            data.typeDetails.map(data2=>{
-                data2.subCategory.filter(data3=>{
-                    if(data2.subCategory.includes(req.params.id)){
-                        if(data3 != req.params.id){
-                            subCategory.push(data3)
-                        }
-                    }
-                })
-                if(!data2.subCategory.includes(req.params.id)){
-                    typeDetails.push({
-                        category:data2.category,
-                        subCategory:data2.subCategory
-                    })
-                }else{
-                    if(data2.subCategory.length>1){
-                        typeDetails.push({
-                            category:data2.category,
-                            subCategory
-                        })
-                    }
-                }
-            })
-            if(typeDetails.length>0){
-                Type.findByIdAndUpdate(id)
-                    .then(data4=>{
-                        data4.typeDetails=typeDetails
-            
-                        data4.save()
-                    })
-            }else{
-                Type.findByIdAndDelete(id)
-                    .then(data5=>{
-                        data5.remove()
-                    })
+    const category = await Department.find({"subCategory":req.params.id});
+    const type=await Type.find({"typeDetails.subCategory":req.params.id});
+    console.log(type)
+
+    category.filter(async(data)=>{
+        const subCategory=[]
+        data.subCategory.filter(data2=>{
+            if(data2!=req.params.id){
+                subCategory.push(data2)
             }
         })
-    }
+        if(subCategory.length>0){
+            Department.updateOne({_id:data._id},{$set:{subCategory:subCategory}},function(){
+                
+            })
+        }
+        else{
+            Department.remove({_id:data._id},function(){
+
+            })
+        }
+    })
+    type.filter(async(data)=>{
+        const typeDetails=[]
+        data.typeDetails.filter(data2=>{
+            const subCategory=[]
+            data2.subCategory.filter(data3=>{
+                if(data3!=req.params.id){
+                    subCategory.push(data3)
+                }
+            })
+            if(subCategory.length>0){
+                typeDetails.push({
+                    category:data2.category,
+                    subCategory
+                })
+            }
+        })
+        if(typeDetails.length>0){
+            Type.updateOne({_id:data._id},{$set:{typeDetails:typeDetails}},function(){
+
+            })
+        }else{
+            Type.remove({_id:data._id},function(){
+
+            })
+        }
+    })
 
     Product.remove({subCategory:req.params.id},function(err,results){
 
@@ -207,79 +212,49 @@ router.post('/bulk',uploads.single('csv'),auth,async(req,res)=>{
     const base_url="http://localhost:5000/"
 
     const subDepartment=await SubDepartment.find();
-    const department=await Department.find()
     if(req.file.fieldname === 'csv'){
         const csv1=await csv().fromFile(req.file.path)
             csv1.map(async(subCat)=>{
                 const check = subDepartment.filter(a=>a.name.toLowerCase().trim() ===subCat.name.toLowerCase().trim())
-                const checkCat=department.filter(a=>a.name.toLowerCase().trim() == subCat.category.toLowerCase().trim())
+                // const checkCat=department.filter(a=>a.name.toLowerCase().trim() == subCat.category.toLowerCase().trim())
                 const nameCheck=report.success.some(a=>a.name.toLowerCase().trim() ==subCat.name.toLowerCase().trim())
                 
-                if(subCat.name && subCat.description && subCat.category){
+                if(subCat.name && subCat.description){
                     if(check.length>0 || nameCheck){
-                        if(checkCat.length===0){
-                            report.error.push(
-                                {
-                                    name:subCat.name,
-                                    category:subCat.category,
-                                    description:subCat.description,
-                                    status:"Failed",
-                                    message:`Category not exist.`
-                                }
-                            )
-                        }else{
-                            report.error.push(
-                                {
-                                    name:subCat.name,
-                                    category:subCat.category,
-                                    description:subCat.description,
-                                    status:"Failed",
-                                    message:`${subCat.name} is already exist.`
-                                }
-                            )
-                        }
-                    }else{
-                        if(checkCat.length == 0){
-                            report.error.push(
-                                {
-                                    name:subCat.name,
-                                    category:subCat.category,
-                                    description:subCat.description,
-                                    status:"Failed",
-                                    message:`Category not exist.`
-                                }
-                            )
-                        }else{
-                            const subDepartmentData=new SubDepartment({
+                        report.error.push(
+                            {
                                 name:subCat.name,
-                                category:checkCat[0]._id,
-                                description:subCat.description
-                            })
-            
-                            subDepartmentData.save()
-                            report.success.push(
-                                {
-                                    name:subCat.name,
-                                    category:subCat.category,
-                                    description:subCat.description,
-                                    status:"Success",
-                                    message:`${subCat.name} is successfully added.`
-                                }
-                            )
-                        }
+                                description:subCat.description,
+                                status:"Failed",
+                                message:`${subCat.name} is already exist.`
+                            }
+                        )
+                    }else{
+                        const subDepartmentData=new SubDepartment({
+                            name:subCat.name,
+                            description:subCat.description
+                        })
+        
+                        subDepartmentData.save()
+                        report.success.push(
+                            {
+                                name:subCat.name,
+                                description:subCat.description,
+                                status:"Success",
+                                message:`${subCat.name} is successfully added.`
+                            }
+                        )
                     }
                 }else{
                     const name=subCat.name ? '' :'name'
-                    const category=subCat.category ? '' : 'category'
                     const description=subCat.description ? '':'description'
-                    const both=(subCat.name || subCat.category || subCat.description) ? '' : 'name , category and description'
+                    const both=(subCat.name || subCat.description) ? '' : 'name and description'
                     report.error.push(
                         {
                             name:subCat.name,
-                            category:subCat.category,
                             description:subCat.description,
                             status:"Failed",
-                            message:`${both || category || description || name} is required`
+                            message:`${both || description || name} is required`
                         }
                     )
                 }
@@ -330,6 +305,27 @@ router.post('/deleteBulk',auth,async(req,res)=>{
             if(err!==null){
                 product=false
             }
+        })
+
+        deleteData.filter(async(delData)=>{
+            const department=await Department.find({'subCategory':delData})
+            department.filter(data=>{
+                const subCategory=[]
+                data.subCategory.filter(data2=>{
+                    if(data2!=delData){
+                        subCategory.push(data2)
+                    }
+                })
+                if(subCategory.length>0){
+                    Department.updateOne({_id:data._id},{$set:{subCategory:subCategory}},function(){
+
+                    })
+                }else{
+                    Department.remove({_id:data._id},function(){
+
+                    })
+                }
+            })
         })
 
         // deleteData.map(delData=>{

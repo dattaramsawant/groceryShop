@@ -11,7 +11,12 @@ const DepartmentSchema=new Schema({
         type:String,
         required:[true,'Description is Required'],
         trim:true
-    }
+    },
+    subCategory:[{
+        type:Schema.Types.ObjectId,
+        ref:'SubDepartment',
+        require:[true,'Sub Category is required']
+    }]
 },{
     timestamps:true
 });

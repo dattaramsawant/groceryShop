@@ -7,6 +7,7 @@ import FormDropdown from '../../../commonComponents/FormDropdown'
 import Tables from '../../../commonComponents/Tables'
 import { BASEURL, TYPE } from '../../../api/APIEndpoints'
 import APIServices from '../../../api/APIServices'
+import ErrorValidation from '../../../commonComponents/ErrorValidation'
 
 export default function TypeForm(props) {
     const [dropdown,setDropdown]=useState(false)
@@ -29,6 +30,12 @@ export default function TypeForm(props) {
         {headerName:"Action"},
     ])
 
+    const validationSchema = Yup.object().shape({
+        name: Yup.string()
+            .trim()
+            .required("This Field is Required")
+    })
+
     const ref=useRef()
 
     useClickOutSide(ref,()=>{
@@ -43,11 +50,11 @@ export default function TypeForm(props) {
         const subCat=[]
         let category=''
         let categoryId=''
-        props.subCategory.map(data=>{
-            if(data.category._id === e.target.value){
-                category=data.category.name
-                categoryId=data.category._id
-                subCat.push(data)
+        props.category.map(data=>{
+            if(data._id === e.target.value){
+                category=data.name
+                categoryId=data._id
+                subCat.push(...data.subCategory)
             }
         })
         setSubCategory([])
@@ -170,9 +177,9 @@ export default function TypeForm(props) {
             subCat.push(a._id)
         })
         console.log(data)
-        props.subCategory.map(a=>{
-            if(a.category._id === data.category.id){
-                subCatData.push(a)
+        props.category.map(a=>{
+            if(a._id === data.category.id){
+                subCatData.push(...a.subCategory)
             }
         })
         setEditFlag(true)
@@ -221,49 +228,53 @@ export default function TypeForm(props) {
                     category:''
                 }}
 
-                // validationSchema={validationSchema}
+                validationSchema={validationSchema}
 
                 onSubmit={async(values, { setSubmitting, resetForm }) => {
                     setSubmitting(true)
                     if(props.editFlag){
-                        const data={
-                            name:values.name,
-                            typeDetails:finalTypeDetails
-                        }
-                        const url=BASEURL+TYPE+'/'+props.editData._id
-                        const req=await new APIServices().patch(url,data)
-                        if(req.error){
-                            props.setToaster(true)
-                            props.setToasterMsg(req.results.message)
-                            props.setToasterStatus("error")
-                            setTimeout(()=>{
-                                props.setToaster(false)
-                                props.setToasterMsg('')
-                                props.setToasterStatus('')
-                            },5000)
-                        }else{
-                            props.updateState(req.results)
-                            props.closeModal()
+                        if(finalTypeDetails.length>0){
+                            const data={
+                                name:values.name,
+                                typeDetails:finalTypeDetails
+                            }
+                            const url=BASEURL+TYPE+'/'+props.editData._id
+                            const req=await new APIServices().patch(url,data)
+                            if(req.error){
+                                props.setToaster(true)
+                                props.setToasterMsg(req.results.message)
+                                props.setToasterStatus("error")
+                                setTimeout(()=>{
+                                    props.setToaster(false)
+                                    props.setToasterMsg('')
+                                    props.setToasterStatus('')
+                                },5000)
+                            }else{
+                                props.updateState(req.results)
+                                props.closeModal()
+                            }
                         }
                     }else{
-                        const data={
-                            name:values.name,
-                            typeDetails:finalTypeDetails
-                        }
-                        const url=BASEURL+TYPE
-                        const req=await new APIServices().post(url,data)
-                        if(req.error){
-                            props.setToaster(true)
-                            props.setToasterMsg(req.results.message)
-                            props.setToasterStatus("error")
-                            setTimeout(()=>{
-                                props.setToaster(false)
-                                props.setToasterMsg('')
-                                props.setToasterStatus('')
-                            },5000)
-                        }else{
-                            props.updateState(req.results)
-                            props.closeModal()
+                        if(finalTypeDetails.length>0){
+                            const data={
+                                name:values.name,
+                                typeDetails:finalTypeDetails
+                            }
+                            const url=BASEURL+TYPE
+                            const req=await new APIServices().post(url,data)
+                            if(req.error){
+                                props.setToaster(true)
+                                props.setToasterMsg(req.results.message)
+                                props.setToasterStatus("error")
+                                setTimeout(()=>{
+                                    props.setToaster(false)
+                                    props.setToasterMsg('')
+                                    props.setToasterStatus('')
+                                },5000)
+                            }else{
+                                props.updateState(req.results)
+                                props.closeModal()
+                            }
                         }
                     }
                 }}

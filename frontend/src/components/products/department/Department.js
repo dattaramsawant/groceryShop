@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { BASEURL,DEPARTMENT } from '../../../api/APIEndpoints'
+import { BASEURL,DEPARTMENT, SUBDEPARTMENT } from '../../../api/APIEndpoints'
 import APIServices from '../../../api/APIServices'
 import AddButton from '../../../commonComponents/AddButton'
 import BulkUploadButton from '../../../commonComponents/BulkUploadButton'
@@ -29,6 +29,7 @@ export default function Department() {
     const [deleteModal,setDeleteModal]=useState(false)
     const [deleteData,setDeleteData]=useState({})
     const [bulkModal,setBulkModal]=useState(false)
+    const [subCategory,setSubCategory]=useState([])
 
     const openModal=()=>{
         setModal(!modal)
@@ -44,6 +45,18 @@ export default function Department() {
     const bulkModalClose=()=>{
         setBulkModal(false)
     }
+
+    const fetchSubCategory=async()=>{
+        const url=BASEURL+SUBDEPARTMENT
+        const res=await new APIServices().get(url)
+        if(!res.error){
+            setSubCategory(res.results.subDepartment)
+        }
+    }
+
+    useEffect(()=>{
+        fetchSubCategory()
+    },[])
 
     const fetchData=async()=>{
         const url=BASEURL+DEPARTMENT+`?page=${page}&limit=${limit}&name=${search}`
@@ -178,6 +191,7 @@ export default function Department() {
                         setToaster={(data)=>setToaster(data)}
                         setToasterMsg={(data)=>setToasterMsg(data)}
                         setToasterStatus={(data)=>setToasterStatus(data)}
+                        subCategory={subCategory}
                     />
                 </Modal>
             }

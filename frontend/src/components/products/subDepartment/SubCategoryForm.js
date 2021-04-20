@@ -14,10 +14,6 @@ export default function SubCategoryForm(props) {
         name: Yup.string()
             .trim()
             .required("This Field is Required"),
-
-        category:Yup.string()
-            .trim()
-            .required('This field is required'),
     
         description: Yup.string()
             .trim()
@@ -28,8 +24,7 @@ export default function SubCategoryForm(props) {
             <Formik
                 initialValues={{
                     name:props.editFlag ? props.editData.name : '',
-                    description:props.editFlag ? props.editData.description : '',
-                    category:props.editFlag ? props.editData.category._id : ''
+                    description:props.editFlag ? props.editData.description : ''
                 }}
 
                 validationSchema={validationSchema}
@@ -39,9 +34,7 @@ export default function SubCategoryForm(props) {
                     if(props.editFlag){
                         const url=BASEURL+SUBDEPARTMENT+'/'+props.editData._id
                         const data={
-                            name:values.name,
-                            description:values.description,
-                            category:values.category
+                            description:values.description
                         }
                         const req=await new APIServices().patch(url,data)
                         if(req.error){
@@ -61,8 +54,7 @@ export default function SubCategoryForm(props) {
                         const url=BASEURL+SUBDEPARTMENT
                         const data={
                             name:values.name,
-                            description:values.description,
-                            category:values.category
+                            description:values.description
                         }
                         const req=await new APIServices().post(url,data)
                         if(req.error){
@@ -93,7 +85,7 @@ export default function SubCategoryForm(props) {
                             }
                         }}
                     >
-                        <FormDropdown
+                        {/* <FormDropdown
                             label="Category"
                             onBlur={handleBlur}
                             onChange={handleChange}
@@ -108,7 +100,7 @@ export default function SubCategoryForm(props) {
                             {props.category && props.category.map(data =>(
                                 <option key={data._id} value={data._id}>{data.name}</option>
                             ))}
-                        </FormDropdown>
+                        </FormDropdown> */}
 
                         <FormInput 
                             label="Sub-Category Name"
@@ -120,6 +112,7 @@ export default function SubCategoryForm(props) {
                             name="name"
                             touched={touched.name}
                             message={errors.name}
+                            disabled={props.editFlag}
                         />
 
                         <TextBox 

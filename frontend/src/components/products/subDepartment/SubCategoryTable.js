@@ -6,7 +6,6 @@ import Tables from '../../../commonComponents/Tables'
 
 export default function SubCategoryTable(props) {
     const [header]=useState([
-        {headerName:"Category"},
         {headerName:"Sub-Category"},
         {headerName:"Description"},
         {headerName:"Action"},
@@ -73,7 +72,6 @@ export default function SubCategoryTable(props) {
                         <td>
                             <input type="checkbox" checked={check[data._id]} onChange={(e)=>handleCheck(e,data)} />
                         </td>
-                        <td>{data.category.name}</td>
                         <td>{data.name}</td>
                         <td>{data.description}</td>
                         <td>
