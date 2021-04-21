@@ -13,6 +13,9 @@ export default function SubCategoryReportTable(props) {
     const [check,setCheck]=useState({})
     const [allChecked,setAllChecked]=useState(false)
     const [deleteModal,setDeleteModal]=useState(false)
+    const [viewModal,setViewModal]=useState(false)
+    const [viewReportData,setViewReportData]=useState({})
+    const [headerCSV,setHeader]=useState([])
 
     const handleCheck=(e,data)=>{
         if(allChecked){
@@ -59,6 +62,32 @@ export default function SubCategoryReportTable(props) {
         setDeleteModal(false)
     }
 
+    const viewDocument=async(data)=>{
+        setViewModal(true)
+        setViewReportData(data)
+        const csvData=await fetch(data.file,{
+            method:"GET",
+            headers : { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        })
+        .then(res=>{
+            let reader = res.body.getReader();
+            let decoder = new TextDecoder('utf-8');
+
+            return reader.read().then(function (result) {
+                return decoder.decode(result.value);
+            });
+        })
+        const splitData=csvData.toString().split('\n')
+        const header=splitData[0]
+    }
+    const closeViewModal=()=>{
+        setViewModal(false)
+        setViewReportData({})
+    }
+
     return (
         <>
             <Tables
@@ -90,6 +119,7 @@ export default function SubCategoryReportTable(props) {
                             <td>{fullDate}</td>
                             <td>
                                 <div className="d-flex align-items-center">
+                                    <i className="fa fa-eye cursor" onClick={()=>viewDocument(data)}></i>
                                     <a href={data.file} download>
                                         <i className="fa fa-download cursor"></i>
                                     </a>
@@ -120,6 +150,17 @@ export default function SubCategoryReportTable(props) {
                     >
                         Cancel
                     </button>
+                </Modal>
+            }
+
+            {viewModal &&
+                <Modal
+                    outSideClick={closeViewModal}
+                    closeModal={closeViewModal}
+                    size="small"
+                    name="Report"
+                >
+
                 </Modal>
             }
         </>

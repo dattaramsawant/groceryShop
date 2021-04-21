@@ -7,7 +7,6 @@ import Tables from '../../../commonComponents/Tables'
 export default function DepartmentTable(props) {
     const [header]=useState([
         {headerName:"Name"},
-        {headerName:"Sub-Category"},
         {headerName:"Description"},
         {headerName:"Action"},
     ])
@@ -74,15 +73,6 @@ export default function DepartmentTable(props) {
                             <input type="checkbox" checked={check[data._id]} onChange={(e)=>handleCheck(e,data)} />
                         </td>
                         <td className="width20">{data.name}</td>
-                        <td>
-                            <ul className='m-0 pl-3'>
-                                {data.subCategory.map((subCat,i) =>(
-                                    <li key={i}>
-                                        {subCat.name}
-                                    </li>
-                                ))}
-                            </ul>
-                        </td>
                         <td>{data.description}</td>
                         <td>
                             <div className="d-flex align-items-center">

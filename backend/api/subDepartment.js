@@ -47,7 +47,7 @@ router.get('/',auth,(req,res)=>{
     SubDepartment.find({name:new RegExp(search,"i")})
         .skip(perPage * page)
         .limit(perPage)
-        // .populate('category','_id name')
+        .populate('category','_id name')
         .sort({createdAt:-1})
         .then(subDepartment=>{
             SubDepartment.countDocuments().then(count=>{
@@ -61,19 +61,19 @@ router.get('/',auth,(req,res)=>{
 })
 
 router.post('/',auth,(req,res,next)=>{
-    const {name,description}=req.body;
+    const {name,category,description}=req.body;
 
     // if(!name,!description){
     //     return res.status(400).json({message:'Please enter all details'});
     // }
-    SubDepartment.findOne({name})
+    SubDepartment.findOne({name,category})
         .then(subDepartment=>{
             if(subDepartment){
                 if(subDepartment.name == name) {
                     return res.status(400).json({message:'Sub-Category name already exists'});
                 }
             } else{
-                const departentAdd=new SubDepartment({name,description});
+                const departentAdd=new SubDepartment({name,category,description});
                 departentAdd.save()
                     .then(()=>res.status(201).json({message:'subDepartment added successfully'}))
                     .catch(next);
@@ -82,8 +82,8 @@ router.post('/',auth,(req,res,next)=>{
 })
 
 router.patch('/:id',auth,(req,res,next)=>{
-    const {name}=req.body
-    SubDepartment.findOne({name})
+    const {name,category}=req.body
+    SubDepartment.findOne({name,category})
         .then(dep=>{
             if(dep){
                 if(dep.name == name) {
@@ -93,6 +93,7 @@ router.patch('/:id',auth,(req,res,next)=>{
                 SubDepartment.findByIdAndUpdate(req.params.id)
                 .then(subDepartment=>{
                     subDepartment.description=req.body.description
+                    subDepartment.category=req.body.category
         
                     subDepartment.save()
                         .then(()=>res.status(200).json({message:"SUbDepartment update successfully"}))
@@ -103,91 +104,31 @@ router.patch('/:id',auth,(req,res,next)=>{
 })
 
 router.put('/:id',auth,(req,res,next)=>{
-    const {name}=req.body
-    SubDepartment.findOne({name})
+    const {name,category}=req.body
+    SubDepartment.findOne({name,category})
         .then(dep=>{
             if(dep){
-                if(dep.category == category && dep.name == name) {
+                if(dep.category == category && dep.name.toLowerCase().trim() == name.toLowerCase().trim()) {
                     return res.status(400).json({message:'Sub-Category name already exists'});
                 }
             } else{
                 SubDepartment.findByIdAndUpdate(req.params.id)
-                .then(subDepartment=>{
-                    subDepartment.description=req.body.description
-        
-                    subDepartment.save()
-                        .then(()=>res.status(200).json({message:"SUbDepartment update successfully"}))
-                        .catch(next)
-                })
+                    .then(subDepartment=>{
+                        subDepartment.description=req.body.description
+                        subDepartment.category=req.body.category
+            
+                        subDepartment.save()
+                            .then(()=>res.status(200).json({message:"SUbDepartment update successfully"}))
+                            .catch(next)
+                    })
             }
         })
 })
 
 router.delete('/:id',auth,async(req,res)=>{
-    // const product=await Product.find();
-    // const productFilter=product.filter(prd=>prd.subCategory == req.params.id)
-
-    // const type=await Type.find();
-    // const typeFilter=type.filter(a=>a.typeDetails.filter(b=>b.subCategory.filter(c=>c._id==req.params.id)))
-    
-    const category = await Department.find({"subCategory":req.params.id});
-    const type=await Type.find({"typeDetails.subCategory":req.params.id});
-    console.log(type)
-
-    category.filter(async(data)=>{
-        const subCategory=[]
-        data.subCategory.filter(data2=>{
-            if(data2!=req.params.id){
-                subCategory.push(data2)
-            }
-        })
-        if(subCategory.length>0){
-            Department.updateOne({_id:data._id},{$set:{subCategory:subCategory}},function(){
-                
-            })
-        }
-        else{
-            Department.remove({_id:data._id},function(){
-
-            })
-        }
-    })
-    type.filter(async(data)=>{
-        const typeDetails=[]
-        data.typeDetails.filter(data2=>{
-            const subCategory=[]
-            data2.subCategory.filter(data3=>{
-                if(data3!=req.params.id){
-                    subCategory.push(data3)
-                }
-            })
-            if(subCategory.length>0){
-                typeDetails.push({
-                    category:data2.category,
-                    subCategory
-                })
-            }
-        })
-        if(typeDetails.length>0){
-            Type.updateOne({_id:data._id},{$set:{typeDetails:typeDetails}},function(){
-
-            })
-        }else{
-            Type.remove({_id:data._id},function(){
-
-            })
-        }
-    })
-
     Product.remove({subCategory:req.params.id},function(err,results){
 
     })
-    // if(productFilter.length > 0){
-    //     productFilter.map(data=>{
-    //         Product.deleteOne({_id:data._id},function(err,results){
-    //         });
-    //     })
-    // }
     SubDepartment.findByIdAndDelete(req.params.id)
         .then(subDepartment=>
             subDepartment.remove()
@@ -212,49 +153,74 @@ router.post('/bulk',uploads.single('csv'),auth,async(req,res)=>{
     const base_url="http://localhost:5000/"
 
     const subDepartment=await SubDepartment.find();
+    const department=await Department.find();
     if(req.file.fieldname === 'csv'){
         const csv1=await csv().fromFile(req.file.path)
             csv1.map(async(subCat)=>{
                 const check = subDepartment.filter(a=>a.name.toLowerCase().trim() ===subCat.name.toLowerCase().trim())
-                // const checkCat=department.filter(a=>a.name.toLowerCase().trim() == subCat.category.toLowerCase().trim())
+                const checkCat=department.filter(a=>a.name.toLowerCase().trim() == subCat.category.toLowerCase().trim())
                 const nameCheck=report.success.some(a=>a.name.toLowerCase().trim() ==subCat.name.toLowerCase().trim())
                 
                 if(subCat.name && subCat.description){
                     if(check.length>0 || nameCheck){
-                        report.error.push(
-                            {
+                        if(checkCat.length==0){
+                            report.error.push({
                                 name:subCat.name,
-                                description:subCat.description,
+                                category:subCat.category,
+                                description:cat.description,
                                 status:"Failed",
-                                message:`${subCat.name} is already exist.`
-                            }
-                        )
+                                message:`Category not exist.`
+                            })
+                        }else{
+                            report.error.push(
+                                {
+                                    name:subCat.name,
+                                    category:subCat.category,
+                                    description:subCat.description,
+                                    status:"Failed",
+                                    message:`${subCat.name} is already exist.`
+                                }
+                            )
+                        }
                     }else{
-                        const subDepartmentData=new SubDepartment({
-                            name:subCat.name,
-                            description:subCat.description
-                        })
-        
-                        subDepartmentData.save()
-                        report.success.push(
-                            {
+                        if(checkCat.length==0){
+                            report.error.push({
                                 name:subCat.name,
-                                description:subCat.description,
-                                status:"Success",
-                                message:`${subCat.name} is successfully added.`
-                            }
-                        )
+                                category:subCat.category,
+                                description:cat.description,
+                                status:"Failed",
+                                message:`Category not exist.`
+                            })
+                        }else{
+                            const subDepartmentData=new SubDepartment({
+                                name:subCat.name,
+                                category:subCat.category,
+                                description:subCat.description
+                            })
+            
+                            subDepartmentData.save()
+                            report.success.push(
+                                {
+                                    name:subCat.name,
+                                    description:subCat.description,
+                                    status:"Success",
+                                    message:`${subCat.name} is successfully added.`
+                                }
+                            )
+                        }
                     }
                 }else{
                     const name=subCat.name ? '' :'name'
+                    const category=subCat.category ? '' : 'Category'
                     const description=subCat.description ? '':'description'
-                    const both=(subCat.name || subCat.description) ? '' : 'name and description'
+                    const both=(subCat.name || subCat.category || subCat.description) ? '' : 'name, category and description'
                     report.error.push(
                         {
                             name:subCat.name,
+                            category:subCat.category,
                             description:subCat.description,
                             status:"Failed",
-                            message:`${both || description || name} is required`
+                            message:`${both || category || description || name} is required`
                         }
                     )
                 }
@@ -294,7 +260,6 @@ router.post('/deleteBulk',auth,async(req,res)=>{
     if(deleteData.length>0){
         let subDepartment=true
         let product=true
-        let typeFlag=true
 
         SubDepartment.deleteMany({_id:deleteData},function(err,results){
             if(err!==null){
@@ -306,31 +271,6 @@ router.post('/deleteBulk',auth,async(req,res)=>{
                 product=false
             }
         })
-
-        deleteData.filter(async(delData)=>{
-            const department=await Department.find({'subCategory':delData})
-            department.filter(data=>{
-                const subCategory=[]
-                data.subCategory.filter(data2=>{
-                    if(data2!=delData){
-                        subCategory.push(data2)
-                    }
-                })
-                if(subCategory.length>0){
-                    Department.updateOne({_id:data._id},{$set:{subCategory:subCategory}},function(){
-
-                    })
-                }else{
-                    Department.remove({_id:data._id},function(){
-
-                    })
-                }
-            })
-        })
-
-        // deleteData.map(delData=>{
-
-        // })
 
         if(subDepartment && product){
             return res.status(201).json({message:"Successfully"})

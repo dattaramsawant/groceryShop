@@ -50,11 +50,11 @@ export default function TypeForm(props) {
         const subCat=[]
         let category=''
         let categoryId=''
-        props.category.map(data=>{
-            if(data._id === e.target.value){
-                category=data.name
-                categoryId=data._id
-                subCat.push(...data.subCategory)
+        props.subCategory.map(data=>{
+            if(data.category._id === e.target.value){
+                category=data.category.name
+                categoryId=data.category._id
+                subCat.push(data)
             }
         })
         setSubCategory([])
@@ -177,9 +177,9 @@ export default function TypeForm(props) {
             subCat.push(a._id)
         })
         console.log(data)
-        props.category.map(a=>{
-            if(a._id === data.category.id){
-                subCatData.push(...a.subCategory)
+        props.subCategory.map(a=>{
+            if(a.category._id === data.category.id){
+                subCatData.push(a)
             }
         })
         setEditFlag(true)

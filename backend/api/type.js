@@ -16,14 +16,51 @@ router.get('/',auth,(req,res)=>{
             {path:'typeDetails',populate:[{path:'category',select:'_id name'},{path:'subCategory',select:'_id name'}]} 
         ])
         .sort({createdAt:-1})
-        .then(type=>{
-            Type.countDocuments().then(count=>{
-                return res.status(200).json({
-                    totalCount:count,
-                    currentCount:type.length,
-                    type
+        .then(typeData=>{
+            const type=[]
+            const id=[]
+            typeData.map(data=>{
+                const typeDetails=[]
+                data.typeDetails.map(data2=>{
+                    if(data2.category != null && data2.subCategory.length>0){
+                        typeDetails.push({
+                            _id:data2._id,
+                            subCategory:data2.subCategory,
+                            category:data2.category
+                        })
+                    }
                 })
+                if(typeDetails.length>0){
+                    type.push({
+                        _id:data._id,
+                        name:data.name,
+                        typeDetails
+                    })
+                }else{
+                    id.push(data._id)
+                }
             })
+            if(type.length>0){
+                Type.countDocuments().then(count=>{
+                    return res.status(200).json({
+                        totalCount:count,
+                        currentCount:type.length,
+                        type
+                    })
+                })
+            }else{
+                Type.deleteMany({_id:id})
+                    .then(()=>{
+                        Type.countDocuments().then(count=>{
+                            return res.status(200).json({
+                                totalCount:count,
+                                currentCount:type.length,
+                                type
+                            })
+                        })
+                    })
+            }
+            
         })
 })
 

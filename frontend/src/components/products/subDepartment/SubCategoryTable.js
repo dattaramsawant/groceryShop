@@ -7,6 +7,7 @@ import Tables from '../../../commonComponents/Tables'
 export default function SubCategoryTable(props) {
     const [header]=useState([
         {headerName:"Sub-Category"},
+        {headerName:"Category"},
         {headerName:"Description"},
         {headerName:"Action"},
     ])
@@ -73,6 +74,7 @@ export default function SubCategoryTable(props) {
                             <input type="checkbox" checked={check[data._id]} onChange={(e)=>handleCheck(e,data)} />
                         </td>
                         <td>{data.name}</td>
+                        <td>{data.category.name}</td>
                         <td>{data.description}</td>
                         <td>
                             <div className="d-flex align-items-center">

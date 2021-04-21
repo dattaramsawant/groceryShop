@@ -36,14 +36,36 @@ router.get('/',auth,(req,res)=>{
         .limit(perPage)
         .populate('brandCategory','_id name')
         .sort({createdAt:-1})
-        .then(brand=>{
-            Brand.countDocuments().then(count=>{
-                return res.status(200).json({
-                    totalCount:count,
-                    currentCount:brand.length,
-                    brand
-                })
+        .then(brandData=>{
+            const brand=[]
+            const id=[]
+            brandData.map(data=>{
+                if(data.brandCategory.length>0){
+                    brand.push(data)
+                }else{
+                    id.push(data._id)
+                }
             })
+            if(brand.length>0){
+                Brand.countDocuments().then(count=>{
+                    return res.status(200).json({
+                        totalCount:count,
+                        currentCount:brand.length,
+                        brand
+                    })
+                })
+            }else{
+                Brand.deleteMany({_id:id})
+                    .then(()=>{
+                        Brand.countDocuments().then(count=>{
+                            return res.status(200).json({
+                                totalCount:count,
+                                currentCount:brand.length,
+                                brand
+                            })
+                        })
+                    })
+            }            
         })
 })
 

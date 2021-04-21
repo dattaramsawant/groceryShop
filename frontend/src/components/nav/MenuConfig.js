@@ -19,9 +19,6 @@ export default{
                         name:'Brand',
                         path:'/dashboard/brand'
                     },{
-                        name:'Brand Report',
-                        path:'/dashboard/brandReport'
-                    },{
                         name:'Type',
                         path:'/dashboard/type'
                     },
@@ -35,17 +32,25 @@ export default{
                         name:'Category',
                         path:'/dashboard/category'
                     },{
-                        name:'Category Report',
-                        path:'/dashboard/categoryReport'
-                    },{
                         name:'Sub Category',
                         path:'/dashboard/subCategory'
-                    },{
-                        name:'Sub-Category Report',
-                        path:'/dashboard/subCategoryReport'
                     },
 
                 ]
+            },
+            {
+                groupName:"Report",
+                icon:'fa fa-columns',
+                group:[{
+                    name:'Brand Report',
+                    path:'/dashboard/brandReport'
+                },{
+                    name:'Category Report',
+                    path:'/dashboard/categoryReport'
+                },{
+                    name:'Sub-Category Report',
+                    path:'/dashboard/subCategoryReport'
+                },]
             }
         ]
     }

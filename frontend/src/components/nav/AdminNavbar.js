@@ -5,7 +5,7 @@ import MenuConfig from './MenuConfig';
 
 function AdminNavbar(props) {
     const [closeNavClick,setCloseNavClick]=useState(false)
-    const [dropdownClick,setDropdownClick]=useState(false)
+    const [dropdownClick,setDropdownClick]=useState({})
     const [dropdownOver,setDropdownOver]=useState(false)
     const ref=useRef()
     const logoClick=()=>{
@@ -16,8 +16,10 @@ function AdminNavbar(props) {
     const arrowClick=()=>{
         setCloseNavClick(!closeNavClick)
     }
-    const dropdownNavClick=()=>{
-        setDropdownClick(!dropdownClick)
+    const dropdownNavClick=(route,i)=>{
+        if(!closeNavClick){
+            setDropdownClick({[route.groupName]:!dropdownClick[route.groupName]})
+        }
     }
     const dropdownMouseOver=()=>{
         setDropdownOver(true)
@@ -38,7 +40,6 @@ function AdminNavbar(props) {
           document.removeEventListener("mouseOut", handleRemove);
         };
       });
-      console.log(dropdownClick || dropdownOver)
     return (
         // <div className="adminNav">
             <div className={`${closeNavClick ?'closeSideBar':'sideBar'}`}>
@@ -57,16 +58,16 @@ function AdminNavbar(props) {
                             <div className='adminGroupNav cursor' ref={ref}>
                                 <div 
                                     className={`topNavTag dashNav d-flex align-items-center ${closeNavClick ? 'justify-content-center' : undefined}`}
-                                    onClick={!closeNavClick && dropdownNavClick}
+                                    onClick={()=>dropdownNavClick(route,i)}
                                     // onMouseOver={closeNavClick && dropdownMouseOver} 
                                     // onMouseOut={closeNavClick && dropdownMouseOut} 
                                 >
                                     <i className={`navBarIcon ${!closeNavClick ? 'mr-3' : undefined} ${route.icon}`} /> 
                                     <p className="adminNavTag">{!closeNavClick && route.groupName}</p> 
-                                    <i className={` ${!dropdownClick ? 'fa fa-sort-down navDropdownIconDown' : 'fa fa-sort-up navDropdownIconUp'}`} />
+                                    <i className={` ${!dropdownClick[route.groupName] ? 'fa fa-sort-down navDropdownIconDown' : 'fa fa-sort-up navDropdownIconUp'}`} />
                                 </div>
 
-                                {(dropdownClick) &&
+                                {(dropdownClick[route.groupName]) &&
                                     route.group.map((data,i)=>(
                                         <NavLink
                                             key={i}
