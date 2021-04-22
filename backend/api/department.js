@@ -236,7 +236,7 @@ router.post('/bulk',uploads.single('csv'),auth,async(req,res)=>{
                         const escaped=(row[header].toString()).replace(/"/g, '\\"');
                         return `"${escaped}"`
                     })
-                    csvRows.push(values.join(','));
+                    csvRows.push(values.join(';'));
                 }
                 return csvRows.join('\n')
             }
@@ -280,27 +280,6 @@ router.post('/deleteBulk',auth,async(req,res)=>{
             }
         })
 
-        // deleteData.map(async(delData)=>{
-        //     const type=await Type.find({"typeDetails.category":delData});
-        //     type.map(data=>{
-        //         const id=data._id
-        //         const typeDetails=[]
-        //         data.typeDetails.some(data2=>{
-        //             if(data2.category != delData){
-        //                 typeDetails.push(data2)
-        //             }
-        //         })
-        //         if(typeDetails.length>0){
-        //             Type.updateOne({_id:id},{$set:{typeDetails:typeDetails}},function(){
-
-        //             })
-        //         }else{
-        //             Type.deleteOne({_id:id},function(){
-
-        //             })
-        //         }
-        //     })
-        // })
         if(subDepartment && department && product){
             return res.status(201).json({message:"Successfully"})
         }else{

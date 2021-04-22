@@ -239,7 +239,7 @@ router.post('/bulk',uploads.single('csv'),auth,async(req,res)=>{
                         const escaped=(row[header].toString()).replace(/"/g, '\\"');
                         return `"${escaped}"`
                     })
-                    csvRows.push(values.join(','));
+                    csvRows.push(values.join(';'));
                 }
                 return csvRows.join('\n')
             }

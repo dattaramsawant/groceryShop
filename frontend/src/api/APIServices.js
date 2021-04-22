@@ -86,26 +86,6 @@ export default class APIServices {
     };
   }
 
-  async getReport(url,fileName) {
-    await fetch(url, {
-      method: "GET",
-      headers: {
-        'Content-Type': 'application/octet-stream',
-        'Authorization': "Bearer "+localStorage.getItem("grocery"),
-        'Access-Control-Expose-Headers': 'Content-Disposition'
-      }
-    }).then(response =>{
-      response.blob()
-        .then(blob => {
-          let url = window.URL.createObjectURL(blob);
-          let a = document.createElement("a");
-          a.href = url;
-          a.download = fileName;
-          a.click();
-        })
-    })
-    }
-
     async getImg(url) {
       await fetch(url, {
         method: "GET",
@@ -121,7 +101,74 @@ export default class APIServices {
           let myImage = new Image();
           myImage.src = objectURL;
       })
+    }
+
+    async getReport(url){
+      const csvData=await fetch(url,{
+        method:"GET",
+        headers : { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+      })
+      .then(res=>{
+        this.status=res.status
+        let reader = res.body.getReader();
+        let decoder = new TextDecoder('utf-8');
+
+        return reader.read().then(function (result) {
+          return decoder.decode(result.value);
+        });
+      })
+      .catch(e => {
+          console.log(e);
+      });
+      const splitData=csvData.toString().split('\n')
+      const headersData=splitData[0].split(',')
+      const headers=[]
+      const results=[]
+      headersData.map(data=>{
+        headers.push({headerName:data})
+      })
+      for(let i=1;i<splitData.length-1;i++){
+        let obj={}
+        let str=splitData[i]
+        let flag=0
+        let s = ''
+        for(let ch of str){
+            if(ch==='"' && flag===0){
+                flag=1
+            }else if (ch === '"' && flag == 1) {
+                flag = 0
+            }
+            if (ch === ';' && flag === 0){
+                ch = '|'
+            }
+            if (ch !== '"') {
+                s += ch
+            }
+        }
+        let properties = s.split("|")
+        for(let j in headersData){
+            console.log(properties[j])
+            if(properties[j]!==undefined){
+              if (properties[j].includes(";")) {
+                  obj[headersData[j]] = properties[j].split(";").map(item => item.trim())
+              }else obj[headersData[j]] = properties[j]
+            }                
+        }
+        results.push(obj)
       }
+      const csvDataReport={
+        headers,
+        results
+      }
+      return {
+        error: this.error,
+        results: csvDataReport,
+        status: this.status
+      };
+    }
 
   /* POST method call with fetch */
   async post(url, data, type) {

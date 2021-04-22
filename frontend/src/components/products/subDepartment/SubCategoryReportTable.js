@@ -15,7 +15,8 @@ export default function SubCategoryReportTable(props) {
     const [deleteModal,setDeleteModal]=useState(false)
     const [viewModal,setViewModal]=useState(false)
     const [viewReportData,setViewReportData]=useState({})
-    const [headerCSV,setHeader]=useState([])
+    const [headerCSV,setHeaderCSV]=useState([])
+    const [reportData,setReportData]=useState([])
 
     const handleCheck=(e,data)=>{
         if(allChecked){
@@ -65,23 +66,12 @@ export default function SubCategoryReportTable(props) {
     const viewDocument=async(data)=>{
         setViewModal(true)
         setViewReportData(data)
-        const csvData=await fetch(data.file,{
-            method:"GET",
-            headers : { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        })
-        .then(res=>{
-            let reader = res.body.getReader();
-            let decoder = new TextDecoder('utf-8');
 
-            return reader.read().then(function (result) {
-                return decoder.decode(result.value);
-            });
-        })
-        const splitData=csvData.toString().split('\n')
-        const header=splitData[0]
+        const req=await new APIServices().getReport(data.file);
+        if(!req.error){
+            setHeaderCSV(req.results.headers)
+            setReportData(req.results.results)
+        }
     }
     const closeViewModal=()=>{
         setViewModal(false)
@@ -157,10 +147,24 @@ export default function SubCategoryReportTable(props) {
                 <Modal
                     outSideClick={closeViewModal}
                     closeModal={closeViewModal}
-                    size="small"
-                    name="Report"
+                    size="large"
+                    name={`Report ${viewReportData.fileName}`}
                 >
-
+                    <Tables
+                        header={headerCSV}
+                    >
+                        {reportData &&
+                            reportData.map((data,i)=>(
+                                <tr key={i} className="dataRow">
+                                    <td>{data.name}</td>
+                                    <td>{data.category}</td>
+                                    <td>{data.description}</td>
+                                    <td>{data.status}</td>
+                                    <td>{data.message}</td>
+                                </tr>
+                            ))
+                        }
+                    </Tables>
                 </Modal>
             }
         </>

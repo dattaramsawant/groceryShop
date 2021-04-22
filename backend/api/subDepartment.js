@@ -157,26 +157,37 @@ router.post('/bulk',uploads.single('csv'),auth,async(req,res)=>{
     if(req.file.fieldname === 'csv'){
         const csv1=await csv().fromFile(req.file.path)
             csv1.map(async(subCat)=>{
-                const check = subDepartment.filter(a=>a.name.toLowerCase().trim() ===subCat.name.toLowerCase().trim())
-                const checkCat=department.filter(a=>a.name.toLowerCase().trim() == subCat.category.toLowerCase().trim())
-                const nameCheck=report.success.some(a=>a.name.toLowerCase().trim() ==subCat.name.toLowerCase().trim())
+                const categoryArr=subCat.category.split(';');
+                const checkCat=[]
+                const checkCatString=[]
+                categoryArr.filter(cat=>{
+                    department.filter(dep=>{
+                        if(dep.name.toLowerCase().trim() == cat.toLowerCase().trim()){
+                            checkCat.push(dep._id)
+                            checkCatString.push(dep.name)
+                        }
+                    })
+                })
+                const check = subDepartment.filter(a=>subCat.name && a.name.toLowerCase().trim() ===subCat.name.toLowerCase().trim())
+                // const checkCat=department.filter(a=>subCat.category && a.name.toLowerCase().trim() == subCat.category.toLowerCase().trim())
+                const nameCheck=report.success.some(a=>subCat.name && a.name.toLowerCase().trim() ==subCat.name.toLowerCase().trim())
                 
-                if(subCat.name && subCat.description){
+                if(subCat.name && subCat.category && subCat.description){
                     if(check.length>0 || nameCheck){
                         if(checkCat.length==0){
                             report.error.push({
-                                name:subCat.name,
-                                category:subCat.category,
-                                description:cat.description,
+                                name:subCat.name || '',
+                                category:subCat.category || '',
+                                description:cat.description || '',
                                 status:"Failed",
                                 message:`Category not exist.`
                             })
                         }else{
                             report.error.push(
                                 {
-                                    name:subCat.name,
-                                    category:subCat.category,
-                                    description:subCat.description,
+                                    name:subCat.name || '',
+                                    category:subCat.category || '',
+                                    description:subCat.description || '',
                                     status:"Failed",
                                     message:`${subCat.name} is already exist.`
                                 }
@@ -185,16 +196,16 @@ router.post('/bulk',uploads.single('csv'),auth,async(req,res)=>{
                     }else{
                         if(checkCat.length==0){
                             report.error.push({
-                                name:subCat.name,
-                                category:subCat.category,
-                                description:cat.description,
+                                name:subCat.name || '',
+                                category:subCat.category || '',
+                                description:cat.description || '',
                                 status:"Failed",
                                 message:`Category not exist.`
                             })
                         }else{
                             const subDepartmentData=new SubDepartment({
                                 name:subCat.name,
-                                category:subCat.category,
+                                category:checkCat,
                                 description:subCat.description
                             })
             
@@ -202,6 +213,7 @@ router.post('/bulk',uploads.single('csv'),auth,async(req,res)=>{
                             report.success.push(
                                 {
                                     name:subCat.name,
+                                    category:checkCatString,
                                     description:subCat.description,
                                     status:"Success",
                                     message:`${subCat.name} is successfully added.`
@@ -216,9 +228,9 @@ router.post('/bulk',uploads.single('csv'),auth,async(req,res)=>{
                     const both=(subCat.name || subCat.category || subCat.description) ? '' : 'name, category and description'
                     report.error.push(
                         {
-                            name:subCat.name,
-                            category:subCat.category,
-                            description:subCat.description,
+                            name:subCat.name || '',
+                            category:subCat.category || '',
+                            description:subCat.description || '',
                             status:"Failed",
                             message:`${both || category || description || name} is required`
                         }
@@ -235,7 +247,7 @@ router.post('/bulk',uploads.single('csv'),auth,async(req,res)=>{
                         const escaped=(row[header].toString()).replace(/"/g, '\\"');
                         return `"${escaped}"`
                     })
-                    csvRows.push(values.join(','));
+                    csvRows.push(values.join(';'));
                 }
                 return csvRows.join('\n')
             }

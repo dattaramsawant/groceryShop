@@ -13,6 +13,10 @@ export default function BrandReportTable(props) {
     const [check,setCheck]=useState({})
     const [allChecked,setAllChecked]=useState(false)
     const [deleteModal,setDeleteModal]=useState(false)
+    const [viewModal,setViewModal]=useState(false)
+    const [viewReportData,setViewReportData]=useState({})
+    const [headerCSV,setHeaderCSV]=useState([])
+    const [reportData,setReportData]=useState([])
 
     const handleCheck=(e,data)=>{
         if(allChecked){
@@ -59,6 +63,20 @@ export default function BrandReportTable(props) {
         setDeleteModal(false)
     }
 
+    const viewDocument=async(data)=>{
+        setViewModal(true)
+        setViewReportData(data)
+        
+        const req=await new APIServices().getReport(data.file);
+        if(!req.error){
+            setHeaderCSV(req.results.headers)
+            setReportData(req.results.results)
+        }
+    }
+    const closeViewModal=()=>{
+        setViewModal(false)
+        setViewReportData({})
+    }
     return (
         <>
             <Tables
@@ -90,6 +108,7 @@ export default function BrandReportTable(props) {
                             <td>{fullDate}</td>
                             <td>
                                 <div className="d-flex align-items-center">
+                                    <i className="fa fa-eye cursor" onClick={()=>viewDocument(data)}></i>
                                     <a href={data.file} download>
                                         <i className="fa fa-download cursor"></i>
                                     </a>
@@ -120,6 +139,42 @@ export default function BrandReportTable(props) {
                     >
                         Cancel
                     </button>
+                </Modal>
+            }
+
+            {viewModal &&
+                <Modal
+                    outSideClick={closeViewModal}
+                    closeModal={closeViewModal}
+                    size="large"
+                    name={`Report ${viewReportData.fileName}`}
+                >
+                    <Tables
+                        header={headerCSV}
+                    >
+                        {reportData &&
+                            reportData.map((data,i)=>(
+                                <tr key={i} className="dataRow">
+                                    <td>{data.brandName}</td>
+                                    <td>
+                                        {typeof data.brandCategory === 'object' ?
+                                            <ul className='m-0 pl-3'>
+                                                {data.brandCategory.map((category,i) =>(
+                                                    <li key={i}>
+                                                        {category}
+                                                    </li>
+                                                ))}
+                                            </ul>:
+                                            data.brandCategory
+                                        }
+                                        
+                                    </td>
+                                    <td>{data.status}</td>
+                                    <td>{data.message}</td>
+                                </tr>
+                            ))
+                        }
+                    </Tables>
                 </Modal>
             }
         </>
